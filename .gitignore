@@ -2,3 +2,7 @@
 */data/*
 # Ignore summary pics
 */pics/*
+# Ignore any image files
+*.png
+*.jpeg
+*.jpg
