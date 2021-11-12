@@ -5,7 +5,7 @@ library(parallel)
 # Read in Data ------------------------------------------------------------
 
 # set working directory if necessary
-tryCatch(setwd("C:/Users/skyle/Dropbox/2021 Fall/research/Quant150K_Sim"),
+tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
          error = function(cond) {
            message(paste0('Could not set directory. ',
                           'Assuming code is being run via Bash.'))
@@ -42,9 +42,9 @@ y_train <<- data_train[,3, drop = FALSE] %>%
 VAL_SPLIT <- 0.2
 TRAIN_SIZE <- (1 - VAL_SPLIT) * nrow(x_train)
 
-grid <- expand.grid(n_layers = c(1, 2, 4, 8), 
+grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16), 
                     layer_width = c(2^3, 2^6, 2^7),
-                    epochs = c(30, 60, 200), 
+                    epochs = c(20, 50, 100), 
                     batch_size = c(2^6, 2^7, 2^8),
                     decay_rate = c(0, 0.05),
                     square_feat = c(0, 1),

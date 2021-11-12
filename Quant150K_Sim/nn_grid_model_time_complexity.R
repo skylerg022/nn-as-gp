@@ -3,7 +3,7 @@ library(keras)
 library(tictoc)
 
 # set working directory if necessary
-tryCatch(setwd("C:/Users/skyle/Dropbox/2021 Fall/research/Quant150K_Sim"),
+tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
          error = function(cond) {
            message(paste0('Could not set directory. ',
                           'Assuming code is being run via Bash.'))
