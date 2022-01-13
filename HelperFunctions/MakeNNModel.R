@@ -8,16 +8,16 @@ library(keras)
 
 # Make a model following model parameter specifications
 # Input:
-# - pars: a numeric vector of length 8 giving model parameters in 
+# - pars: a numeric vector of length 7 giving model parameters in 
 #   the following order:
 #   - n_layers, layer_width, epochs, batch_size, decay_rate,
-#     square_feat, dropout_rate, model_num
+#     dropout_rate, model_num
 # Output: Customized neural network model object
 makeModel <- function(pars, input_length) {
   
   n_layers <- pars[[1]]
   layer_width <- pars[[2]]
-  dropout_rate <- pars[[7]]
+  dropout_rate <- pars[[6]]
   
   addLayers <- function(model, n_layers) {
     if (n_layers > 0) {
@@ -45,10 +45,10 @@ makeModel <- function(pars, input_length) {
 # Fit model with structural and learning parameters specified
 #  as well as training data
 # Input:
-# - pars: a numeric vector of length 8 giving model parameters in 
+# - pars: a numeric vector of length 7 giving model parameters in 
 #   the following order:
 #   - n_layers, layer_width, epochs, batch_size, decay_rate,
-#     square_feat, dropout_rate, model_num
+#     dropout_rate, model_num
 # - x_train: training
 # - test: a string value of 'part_train', 'all_train', or 'grid'
 # Output:
@@ -56,8 +56,6 @@ makeModel <- function(pars, input_length) {
 #   network model object
 # - If test is 'grid', returns a list of model parameters and validation
 #   loss record across epochs
-# NOTE: If test is not 'grid', then the x matrix may need to be augmented
-#       with x^2 before using predict() if the model includes x^2 terms.
 fitModel <- function(pars, x_train, y_train, test = 'part_train') {
   # Constants
   VAL_SPLIT <- 0.2
@@ -66,12 +64,8 @@ fitModel <- function(pars, x_train, y_train, test = 'part_train') {
   epochs <- pars[[3]]
   batch_size <- pars[[4]]
   decay_rate <- pars[[5]]
-  square_feat <- pars[[6]]
-  model_num <- pars[[8]]
+  model_num <- pars[[7]]
   
-  if (square_feat == 1) { # NOTE: IF THIS IS TRUE, PREDICTION X MUST FIRST BE AUGMENTED WITH SQUARE TRANSFORM
-    x_train <- cbind(x_train, x_train^2)
-  }
   input_length <- ncol(x_train)
   
   model <- makeModel(pars, input_length)

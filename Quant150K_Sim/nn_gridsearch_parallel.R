@@ -4,12 +4,10 @@ library(parallel)
 
 # Read in Data ------------------------------------------------------------
 
-# set working directory if necessary
-tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
-         error = function(cond) {
-           message(paste0('Could not set directory. ',
-                          'Assuming code is being run via Bash.'))
-         })
+# Set working directory if using RStudio
+if (rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
 source('../HelperFunctions/MakeNNModel.R')
 
 # Read in data
@@ -47,7 +45,6 @@ grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16),
                     epochs = c(20, 50, 100), 
                     batch_size = c(2^6, 2^7, 2^8),
                     decay_rate = c(0, 0.05),
-                    square_feat = c(0, 1),
                     dropout_rate = c(0, 0.5)) %>%
   mutate(decay_rate = decay_rate / 
            (TRAIN_SIZE %/% batch_size),
@@ -89,6 +86,6 @@ for (i in 1:length(results)) {
 }
 
 # Write data to csv
-write_csv(grid, 'data/quant150k_grid.csv')
-write_csv(val_df, 'data/quant150k_grid_val_mse.csv')
+write_csv(grid, 'data/quant150k_grid_nn.csv')
+write_csv(val_df, 'data/quant150k_grid_nn_val_mse.csv')
 
