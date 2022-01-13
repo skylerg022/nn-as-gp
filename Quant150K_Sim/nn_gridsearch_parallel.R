@@ -2,20 +2,22 @@ library(tidyverse)
 library(keras)
 library(parallel)
 
-# Read in Data ------------------------------------------------------------
+# Helper functions and data ------------------------------------------------------------
 
 # Set working directory if using RStudio
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 source('../HelperFunctions/MakeNNModel.R')
+source('../HelperFunctions/Other.R')
 
 # Read in data
 load('data/AllSimulatedTemps.RData')
 data_train <- all.sim.data %>%
   rename(x = Lon, y = Lat) %>%
   filter(!is.na(MaskTemp)) %>%
-  # Because blocks of data are in test dataset, validation set should be blocks
+  # Make validation set: Because blocks of data are in test dataset, 
+  #  validation set should be blocks
   mutate(validation = ifelse( (((x > -94.5 & x < -93) & (y < 34.75)) |
                                  ((x > -93.5 & x < -93) & (y > 35.5 & y < 36)) |
                                  ((x > -91.75) & (y > 35.25 & y < 35.75)) |
@@ -24,20 +26,25 @@ data_train <- all.sim.data %>%
                                  ((x > -92.5 & x < -91.75) & (y > 36 & y < 36.75))),
                               1, 0)) %>%
   arrange(validation)
-data_test <- all.sim.data %>%
-  rename(x = Lon, y = Lat) %>%
-  filter(is.na(MaskTemp))
+
+# data_test <- all.sim.data %>%
+#   rename(x = Lon, y = Lat) %>%
+#   filter(is.na(MaskTemp))
 rm(all.sim.data)
 
 
 # Neural Network --------------------------------------------------------
 
-x_train <<- data_train[,1:2] %>%
-  as.matrix()
-y_train <<- data_train[,3, drop = FALSE] %>%
+VAL_SPLIT <- 0.2
+x_train <- data_train[,1:2] %>%
+  as.matrix() %>%
+  # Center and scale using training data, not validation or test
+  predictorsScaled(val_split = VAL_SPLIT)
+
+y_train <- data_train[,3, drop = FALSE] %>%
   as.matrix()
 
-VAL_SPLIT <- 0.2
+# Set constants
 TRAIN_SIZE <- (1 - VAL_SPLIT) * nrow(x_train)
 
 grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16), 

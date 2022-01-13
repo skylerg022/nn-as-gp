@@ -1,5 +1,4 @@
 library(tidyverse)
-#library(geoR)
 library(keras)
 
 # Set working directory if using RStudio
