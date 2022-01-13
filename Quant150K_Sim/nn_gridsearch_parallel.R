@@ -63,7 +63,7 @@ grid_list <- split(grid, 1:nrow(grid))
 n_cores <- 20
 time <- system.time({
   results <- mclapply(grid_list, 
-                      function(pars) fitModel(pars, x_train, y_train, test = 'part_train'),
+                      function(pars) fitModel(pars, x_train, y_train, test = 'grid'),
                       mc.cores = n_cores, mc.silent = FALSE)
                       # mc.cleanup = FALSE, mc.allow.recursive = FALSE)
 })

@@ -33,7 +33,7 @@ makeModel <- function(pars, input_length) {
   
   # Set up compiler
   model <- keras_model_sequential() %>%
-    layer_dense(units = layer_width, input_length = c(input_length), activation = 'relu') %>%
+    layer_dense(units = layer_width, input_shape = c(input_length), activation = 'relu') %>%
     layer_dropout(rate = dropout_rate) %>%
     addLayers(n_layers - 1) %>%
     layer_dense(units = 1)
