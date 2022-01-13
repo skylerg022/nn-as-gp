@@ -1,3 +1,6 @@
+## MakeNNModel.R contains code for fitting and predicting with
+## model structures used in this analysis.
+
 library(tidyverse)
 library(keras)
 
@@ -10,7 +13,7 @@ library(keras)
 #   - n_layers, layer_width, epochs, batch_size, decay_rate,
 #     square_feat, dropout_rate, model_num
 # Output: Customized neural network model object
-makeModel <- function(pars, input_shape) {
+makeModel <- function(pars, input_length) {
   
   n_layers <- pars[[1]]
   layer_width <- pars[[2]]
@@ -30,7 +33,7 @@ makeModel <- function(pars, input_shape) {
   
   # Set up compiler
   model <- keras_model_sequential() %>%
-    layer_dense(units = layer_width, input_shape = c(input_shape), activation = 'relu') %>%
+    layer_dense(units = layer_width, input_length = c(input_length), activation = 'relu') %>%
     layer_dropout(rate = dropout_rate) %>%
     addLayers(n_layers - 1) %>%
     layer_dense(units = 1)
@@ -69,9 +72,9 @@ fitModel <- function(pars, x_train, y_train, test = 'part_train') {
   if (square_feat == 1) { # NOTE: IF THIS IS TRUE, PREDICTION X MUST FIRST BE AUGMENTED WITH SQUARE TRANSFORM
     x_train <- cbind(x_train, x_train^2)
   }
-  input_shape <- ncol(x_train)
+  input_length <- ncol(x_train)
   
-  model <- makeModel(pars, input_shape)
+  model <- makeModel(pars, input_length)
   model %>%
     compile(loss = 'mse',
             optimizer = optimizer_adam(learning_rate = LEARNING_RATE,

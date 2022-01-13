@@ -2,12 +2,10 @@ library(tidyverse)
 #library(geoR)
 library(keras)
 
-# set working directory if necessary
-tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
-         error = function(cond) {
-           message(paste0('Could not set directory. ',
-                          'Assuming code is being run via Bash.'))
-         })
+# Set working directory if using RStudio
+if (rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
 source('../HelperFunctions/MakeNNModel.R')
 
 # Read in data
