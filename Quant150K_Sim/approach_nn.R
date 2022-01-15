@@ -6,6 +6,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 source('../HelperFunctions/MakeNNModel.R')
+source('../HelperFunctions/Defaults.R')
 
 # Read in data
 load('data/AllSimulatedTemps.RData')
@@ -26,40 +27,26 @@ data_test <- all.sim.data %>%
   filter(is.na(MaskTemp))
 rm(all.sim.data)
 
-# Scaling variables
-n_80perc <- floor(nrow(data_train) * 0.8)
-mean_80perc <- data_train[,1:2] %>%
-  head(n_80perc) %>%
-  colMeans()
-sd_80perc <- data_train[,1:2] %>%
-  head(n_80perc) %>%
-  apply(2, sd)
-
-n <- nrow(data_train)
-mean_all <- data_train[,1:2] %>%
-  colMeans()
-sd_all <- data_train[,1:2] %>%
-  apply(2, sd)
-
-quickMatrix <- function(n, x) {
-  matrix(x, ncol = length(x), nrow = n, byrow = TRUE)
-}
 
 # Neural Network --------------------------------------------------------
 
 # Train on 80% of the training data and validate
-x_train <- ( (data_train[,1:2] - quickMatrix(n, mean_80perc)) /
-               quickMatrix(n, sd_80perc) ) %>%
-  as.matrix()
+VAL_SPLIT <- 0.2
+x_train <- data_train[,1:2] %>%
+  as.matrix() %>%
+  # Center and scale using training data, not validation or test
+  predictorsScaled(val_split = VAL_SPLIT)
+
 y_train <- data_train[,3, drop = FALSE] %>%
-  as.matrix.data.frame()
+  as.matrix()
 
-model_pars <- c(n_layers = 6, layer_width = 2^7,
-                epochs = 20, batch_size = 2^7,
-                decay_rate = 0, square_feat = 0,
-                dropout_rate = 0.1, model_num = 1)
+# One of the top five performers in sim_satellite nn grid search (1/15/2022)
+model_pars <- c(n_layers = 16, layer_width = 2^6,
+                epochs = 50, batch_size = 2^6,
+                decay_rate = 0, dropout_rate = 0, 
+                model_num = 25)
 
-model <- fitModel(model_pars, cbind(x_train, x_train^2), y_train, test = 'part_train')
+model <- fitModel(model_pars, x_train, y_train, test = 'part_train')
 
 # What areas are solely validation data?
 # data_train %>%
@@ -75,7 +62,7 @@ model <- fitModel(model_pars, cbind(x_train, x_train^2), y_train, test = 'part_t
 
 # Predictions after fitting 80% of training set
 Predicted <- model %>%
-  predict(cbind(x_train, x_train^2))
+  predict(x_train)
 
 data_pred <- cbind(data_train, Predicted) %>%
   # clip predictions to max/min of observed data
@@ -100,22 +87,22 @@ simple_train %>%
 
 # Test Predictions --------------------------------------------------------
 
-x_train <- ( (data_train[,1:2] - quickMatrix(n, mean_all)) /
-               quickMatrix(n, sd_all) ) %>%
-  as.matrix()
+n <- nrow(data_train)
+x <- predictorsScaled(data_train[,1:2], data_test[,1:2], val_split = 0)
+x_train <- x[1:n,]
+x_test <- x[-c(1:n),]
+rm(x)
+
 y_train <- data_train[,3, drop = FALSE] %>%
   as.matrix()
-x_test <- ( (data_test[,1:2] - quickMatrix(nrow(data_test), mean_all)) /
-              quickMatrix(nrow(data_test), sd_all) ) %>%
-  as.matrix()
 y_test <- data_test[,4, drop = FALSE] %>%
-  as.matrix.data.frame()
+  as.matrix()
 
-model <- fitModel(model_pars, cbind(x_train, x_train^2), y_train, test = 'all_train')
+model <- fitModel(model_pars, x_train, y_train, test = 'all_train')
 
 # Predictions (including test set) after fitting 100% of training set
 Predicted <- model %>%
-  predict(rbind(cbind(x_train, x_train^2), cbind(x_test, x_test^2)))
+  predict(rbind(x_train, x_test))
 
 data_pred <- cbind(rbind(data_train %>% select(-validation), 
                          data_test), 
@@ -130,29 +117,55 @@ simple_train <- data_pred %>%
   summarize(z = mean(z))
 
 # Just test performance
-simple_train %>%
+p_test <- simple_train %>%
   ggplot(aes(x, y, fill = z)) +
   geom_raster() +
   geom_raster(data = data_train,
               mapping = aes(x, y, fill = min(simple_train$z))) +
   facet_wrap(~type) +
   scale_fill_continuous(type = 'viridis') +
-  theme_minimal()
+  theme_minimal() +
+  labs(fill = 'Temp')
 
 # All data prediction
-simple_train %>%
+p_all <- simple_train %>%
   ggplot(aes(x, y, fill = z)) +
   geom_raster() +
   facet_wrap(~type) +
   scale_fill_continuous(type = 'viridis') +
-  theme_minimal()
+  theme_minimal() +
+  labs(fill = 'Temp')
 
 # Evaluate test RMSE
 yhat <- model %>%
-  predict(cbind(x_test, x_test^2))
-sqrt(mean( (y_test - yhat)^2 ))
+  predict(x_test)
+rmse_test <- sqrt(mean( (y_test - yhat)^2 )) %>%
+  round(2)
 
 # Evaluate train RMSE
 yhat <- model %>%
-  predict(cbind(x_train, x_train^2))
-sqrt(mean( (y_train - yhat)^2 ))
+  predict(x_train)
+rmse_train <- sqrt(mean( (y_train - yhat)^2 )) %>%
+  round(2)
+
+
+# Save ggplots
+filename <- paste0('pics/nn_rmsetrain', rmse_train,
+                   '_test', rmse_test, '_showtest.png') %>%
+  str_replace_all('(?<=[0-9])\\.(?=[0-9])', '_')
+ggsave(filename,
+       plot = p_test,
+       width = pic_width,
+       height = pic_height,
+       units = pic_units,
+       bg = 'white')
+
+filename <- paste0('pics/nn_rmsetrain', rmse_train,
+                   '_test', rmse_test, '_showall.png') %>%
+  str_replace_all('(?<=[0-9])\\.(?=[0-9])', '_')
+ggsave(filename,
+       plot = p_all,
+       width = pic_width,
+       height = pic_height,
+       units = pic_units,
+       bg = 'white')

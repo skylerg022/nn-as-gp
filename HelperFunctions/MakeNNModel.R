@@ -104,3 +104,52 @@ fitModel <- function(pars, x_train, y_train, test = 'part_train') {
     stop(err_message)
   }
 }
+
+
+# Other functions ---------------------------------------------------------
+
+# predictorStats
+# Center and scale all observations by columns. To scale the data
+#  using all observations, let x_test be NULL and set val_split to 0.
+#  When x_test is not null, val_split is ignored.
+# Inputs:
+# - x_train: An n x p matrix of n observations and p numeric predictors.
+# - x_test: An m x p matrix of m observations and p numeric predictors.
+#     These observations will never be used to calculate column means and
+#     standard deviations.
+# - val_split: the proportion of training data to exclude (last 100*val_split 
+#     percent of the observations) when calculating column means and standard
+#     devations.
+# Output:
+# - An (n+m) x p matrix of all observations, centered and scaled using
+#     just the training data.
+predictorsScaled <- function(x_train, x_test = NULL, val_split = 0.2) {
+  n <- nrow(x_train)
+  if (is.null(x_test)) {
+    n_train <- floor(nrow(x_train) * (1-val_split))
+  } else {
+    n_train <- n
+  }
+  mean_train <- x_train[1:n_train,] %>%
+    colMeans()
+  sd_train <- x_train[1:n_train,] %>%
+    apply(2, sd)
+  
+  # Function to help with matrix math
+  quickMatrix <- function(n, x) {
+    matrix(x, ncol = length(x), nrow = n, byrow = TRUE)
+  }
+  
+  # Scale predictors with appropriate statistics
+  x_train <- ( (x_train - quickMatrix(n, mean_train)) /
+                 quickMatrix(n, sd_train) ) %>%
+    as.matrix()
+  if (!is.null(x_test)) {
+    x_test <- ( (x_test - quickMatrix(nrow(x_test), mean_train)) /
+                  quickMatrix(nrow(x_test), sd_train) ) %>%
+      as.matrix()
+  }
+  
+  return(rbind(x_train, x_test))
+}
+

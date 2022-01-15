@@ -5,15 +5,14 @@
 # Load libraries
 library(tidyverse)
 
-# set working directory if necessary
-tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
-         error = function(cond) {
-           message(paste0('Could not set directory. ',
-                          'Assuming code is being run via Bash.'))
-         })
+# Set working directory if using RStudio
+if (rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
 
-model <- read_csv('data/gridsearch_nn/quant150k_grid.csv')
-loss <- read_csv('data/gridsearch_nn/quant150k_grid_val_mse.csv') %>%
+model <- read_csv('data/gridsearch_nn/quant150k_grid_nn.csv') # read_csv('data/gridsearch_nn/quant150k_grid.csv')
+loss <- read_csv('data/gridsearch_nn/quant150k_grid_nn_val_mse.csv') %>%
+  # read_csv('data/gridsearch_nn/quant150k_grid_val_mse.csv') %>%
   mutate(rmse = sqrt(val_mse)) %>%
   inner_join(model, by = 'model_num')
 
@@ -25,15 +24,15 @@ loss %>%
   geom_smooth(se = FALSE, alpha = 0.5) +
   facet_grid(epochs ~ layer_width) +
   scale_y_continuous(limits = c(NA, 5))
-# Seems like 30 epochs is not sufficient to get good validation performance.
-# Consider removing 30 epochs option and adding 100 epoch option.
+# It seems that more than 30 epochs is necessary for better
+#  performance
 
 loss %>%
   ggplot(aes(x = epoch, y = rmse, group = model_num)) +
   geom_smooth(se = FALSE, alpha = 0.5, col = 'royalblue') +
   facet_grid(epochs ~ decay_rate) +
   scale_y_continuous(limits = c(NA, 5))
-# Current decay rate settings may be too fast
+# Current decay rate settings may be too fast, don't seem to be helpful
 # Consider reducing decay rate further from 
 
 
@@ -58,7 +57,7 @@ loss_best %>%
 
 loss_best %>%
   group_by(model_num, n_layers, layer_width, epochs,
-           batch_size, decay_rate, square_feat, dropout_rate) %>%
+           batch_size, decay_rate, dropout_rate) %>%
   summarize(min_rmse = round(min(rmse), 2),
             min_rmse_epoch = which.min(rmse)) %>%
   View()
@@ -80,3 +79,7 @@ loss %>%
   geom_smooth(se = FALSE) +
   labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
   theme_bw()
+
+model %>%
+  filter(model_num %in% best_end_modelnum) %>%
+  View()

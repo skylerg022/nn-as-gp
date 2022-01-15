@@ -1,3 +1,10 @@
+## Gridsearch algorithm to tune neural network hyperparameters
+## for the simulated satellite data.
+
+## This is a gridsearch algorithm implemented for use through
+## either MacOS or some Linux OS. This implementation will not
+## run with parallelization on Windows OS
+
 library(tidyverse)
 library(keras)
 library(parallel)
@@ -9,7 +16,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 source('../HelperFunctions/MakeNNModel.R')
-source('../HelperFunctions/Other.R')
+source('../HelperFunctions/Defaults.R')
 
 # Read in data
 load('data/AllSimulatedTemps.RData')
@@ -27,9 +34,6 @@ data_train <- all.sim.data %>%
                               1, 0)) %>%
   arrange(validation)
 
-# data_test <- all.sim.data %>%
-#   rename(x = Lon, y = Lat) %>%
-#   filter(is.na(MaskTemp))
 rm(all.sim.data)
 
 
@@ -37,7 +41,6 @@ rm(all.sim.data)
 
 VAL_SPLIT <- 0.2
 x_train <- data_train[,1:2] %>%
-  as.matrix() %>%
   # Center and scale using training data, not validation or test
   predictorsScaled(val_split = VAL_SPLIT)
 
@@ -66,7 +69,7 @@ grid_list <- split(grid, 1:nrow(grid))
 #   lapply(grid_list, fitModel)
 # })
 
-# Rencher has 40 total cores. Use 20 of those 40
+# Use at most the number of cores available on server
 n_cores <- 20
 time <- system.time({
   results <- mclapply(grid_list, 
