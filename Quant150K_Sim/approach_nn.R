@@ -11,25 +11,6 @@ source('../HelperFunctions/Defaults.R')
 # Read in data
 load('data/SimulatedTempsSplit.RData')
 
-# # Read in data
-# load('data/AllSimulatedTemps.RData')
-# data_train <- all.sim.data %>%
-#   rename(x = Lon, y = Lat) %>%
-#   filter(!is.na(MaskTemp)) %>%
-#   # Because blocks of data are in test dataset, validation set should be blocks
-#   mutate(validation = ifelse( (((x > -94.5 & x < -93) & (y < 34.75)) |
-#                                  ((x > -93.5 & x < -93) & (y > 35.5 & y < 36)) |
-#                                  ((x > -91.75) & (y > 35.25 & y < 35.75)) |
-#                                  ((x > -95.75 & x < -95.25) & (y > 36.25 & y < 36.75)) |
-#                                  ((x > -95 & x < -94.5) & (y > 35.25 & y < 35.75)) |
-#                                  ((x > -92.5 & x < -91.75) & (y > 36 & y < 36.75))),
-#                               1, 0)) %>%
-#   arrange(validation)
-# data_test <- all.sim.data %>%
-#   rename(x = Lon, y = Lat) %>%
-#   filter(is.na(MaskTemp))
-# rm(all.sim.data)
-
 fit_network <- function(type, model_pars, trainval_only = 0) {
   data_train <- rbind(cbind(x_train, y_train),
                       cbind(x_val, y_val))
@@ -188,7 +169,7 @@ fit_network <- function(type, model_pars, trainval_only = 0) {
 
 # One of the top five performers in sim_satellite nn grid search (1/15/2022)
 model_pars <- c(n_layers = 16, layer_width = 2^6,
-                epochs = 1, batch_size = 2^6,
+                epochs = 50, batch_size = 2^6,
                 decay_rate = 0, dropout_rate = 0, 
                 model_num = 25)
 
