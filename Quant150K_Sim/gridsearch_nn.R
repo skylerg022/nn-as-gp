@@ -15,13 +15,14 @@ library(parallel)
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
+source('eda.R')
 source('../HelperFunctions/MakeNNModel.R')
 source('../HelperFunctions/Defaults.R')
 
 # Read in data
 load('data/SimulatedTempsSplit.RData')
 
-gridsearch <- function(type = 'nn') {
+gridsearch <- function(type = 'nn', n_cores = 20) {
   if (type == 'nn') {
     # x_train and x_val are ready for scaling
   } else if (type == 'nn_trans') {
@@ -61,7 +62,6 @@ gridsearch <- function(type = 'nn') {
   # })
   
   # Use at most the number of cores available on server
-  n_cores <- 20
   time <- system.time({
     results <- mclapply(grid_list, 
                         function(pars) fitModel(pars, x_train, y_train, 
@@ -94,5 +94,7 @@ gridsearch <- function(type = 'nn') {
   return()
 }
 
-gridsearch('nn')
-gridsearch('nn_trans')
+n_cores <- 30
+gridsearch('nn', n_cores = n_cores)
+gridsearch('nn_trans', n_cores = n_cores)
+
