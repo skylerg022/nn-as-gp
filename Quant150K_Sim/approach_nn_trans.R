@@ -32,14 +32,14 @@ rm(all.sim.data)
 
 # Train on 80% of the training data and validate
 VAL_SPLIT <- 0.2
-x_train <- cbind(data_train[,1:2], data_train[,1:2]^2)
+x_train <- cbind(data_train[,1:2], data_train[,1:2]^2) %>%
   # Center and scale using training data, not validation or test
   predictorsScaled(val_split = VAL_SPLIT)
 
 y_train <- data_train[,3, drop = FALSE] %>%
   as.matrix()
 
-# One of the top five performers in sim_satellite nn grid search (1/15/2022)
+# One of the top five performers in sim_satellite nn trans grid search (1/17/2022)
 model_pars <- c(n_layers = 16, layer_width = 2^6,
                 epochs = 50, batch_size = 2^6,
                 decay_rate = 0, dropout_rate = 0, 
@@ -151,7 +151,7 @@ rmse_train <- sqrt(mean( (y_train - yhat)^2 )) %>%
 
 
 # Save ggplots
-filename <- paste0('pics/nn_rmsetrain', rmse_train,
+filename <- paste0('pics/nn_trans_rmsetrain', rmse_train,
                    '_test', rmse_test, '_showtest.png') %>%
   str_replace_all('(?<=[0-9])\\.(?=[0-9])', '_')
 ggsave(filename,
@@ -161,7 +161,7 @@ ggsave(filename,
        units = pic_units,
        bg = 'white')
 
-filename <- paste0('pics/nn_rmsetrain', rmse_train,
+filename <- paste0('pics/nn_trans_rmsetrain', rmse_train,
                    '_test', rmse_test, '_showall.png') %>%
   str_replace_all('(?<=[0-9])\\.(?=[0-9])', '_')
 ggsave(filename,

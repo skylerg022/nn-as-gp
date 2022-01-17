@@ -96,6 +96,6 @@ for (i in 1:length(results)) {
 }
 
 # Write data to csv
-write_csv(grid, 'data/quant150k_grid_nn.csv')
-write_csv(val_df, 'data/quant150k_grid_nn_val_mse.csv')
+write_csv(grid, 'data/quant150k_grid_nn_trans.csv')
+write_csv(val_df, 'data/quant150k_grid_nn_trans_val_mse.csv')
 
