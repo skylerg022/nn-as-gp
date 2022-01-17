@@ -4,12 +4,10 @@
 ## Libraries
 library(tidyverse)
 
-# set working directory if necessary
-tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
-         error = function(cond) {
-           message(paste0('Could not set directory. ',
-                          'Assuming code is being run via Bash.'))
-         })
+# Set working directory if using RStudio
+if (rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
 
 # Read in data
 load('data/AllSimulatedTemps.RData')
@@ -18,7 +16,8 @@ data_train <- all.sim.data %>%
   filter(!is.na(MaskTemp))
 data_test <- all.sim.data %>%
   rename(x = Lon, y = Lat) %>%
-  filter(is.na(MaskTemp))
+  filter(is.na(MaskTemp)) %>%
+  select(-MaskTemp)
 rm(all.sim.data)
 
 # EDA ---------------------------------------------------------------------
@@ -62,6 +61,9 @@ data_train %>%
   theme_minimal()
 
 
+
+# Choosing a validation set -----------------------------------------------
+
 # Create localized areas to be validation set
 data_train2 <- data_train %>%
   mutate(validation = ifelse( (((x > -94.5 & x < -93) & (y < 34.75)) |
@@ -83,3 +85,29 @@ data_train2 %>%
 
 mean(data_train2$validation)
          
+
+# Saving data -------------------------------------------------------------
+
+# Train
+train <- data_train2 %>%
+  filter(validation == 0) %>%
+  select(x, y, MaskTemp)
+x_train <- train[,c(1,2)]
+y_train <- train[,3,drop = FALSE]
+
+# Validation
+val <- data_train2 %>%
+  filter(validation == 1) %>%
+  select(x, y, MaskTemp)
+x_val <- val[,c(1,2)]
+y_val <- train[,3,drop = FALSE]
+
+# Test
+x_test <- data_test[,c(1,2)]
+y_test <- data_test[,3,drop = FALSE]
+
+# Save
+save(x_train, y_train,
+     x_val, y_val,
+     x_test, y_test, 
+     file = 'data/SimulatedTempsSplit.RData')

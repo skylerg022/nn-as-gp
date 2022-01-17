@@ -6,13 +6,12 @@
 library(tidyverse)
 library(keras)
 
-# set working directory if necessary
-tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
-         error = function(cond) {
-           message(paste0('Could not set directory. ',
-                          'Assuming code is being run via Bash.'))
-         })
+# Set working directory if using RStudio
+if (rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
 source('../HelperFunctions/MakeNNModel.R')
+source('../HelperFunctions/Defaults.R')
 
 
 # Read in data
@@ -68,6 +67,7 @@ grid_y <- seq(ymin + offset_y,
 bases <- expand.grid(grid_x, grid_y)
 # qplot(bases[,1], bases[,2], geom = 'point')
 
+# theta <- 1.5 * min(offset_x * 2, offset_y * 2)
 theta <- 1.5 * min(offset_x * 2, offset_y * 2)
 D <- fields::rdist(data_train[, c('x', 'y')], bases) / theta
 X <- wendland(D)
@@ -96,11 +96,10 @@ y_train <- data_train2 %>%
   select(MaskTemp) %>%
   as.matrix()
 
-model_pars <- c(n_layers = 6, layer_width = 2^6,
+model_pars <- c(n_layers = 1, layer_width = 2^11,
                 epochs = 20, batch_size = 2^7,
-                decay_rate = 0, square_feat = 0,
-                dropout_rate = 0.25, model_num = 1,
-                input_size = ncol(x_train))
+                decay_rate = 0, dropout_rate = 0, 
+                model_num = 1)
 
 model <- fitModel(model_pars, x_train, y_train, test = 'part_train')
 
