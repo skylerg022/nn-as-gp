@@ -16,8 +16,7 @@ data_train <- all.sim.data %>%
   filter(!is.na(MaskTemp))
 data_test <- all.sim.data %>%
   rename(x = Lon, y = Lat) %>%
-  filter(is.na(MaskTemp)) %>%
-  select(-MaskTemp)
+  filter(is.na(MaskTemp))
 rm(all.sim.data)
 
 # EDA ---------------------------------------------------------------------
@@ -90,21 +89,22 @@ mean(data_train2$validation)
 
 # Train
 train <- data_train2 %>%
-  filter(validation == 0) %>%
-  select(x, y, MaskTemp)
+  filter(validation == 0)
 x_train <- train[,c(1,2)]
-y_train <- train[,3,drop = FALSE]
+y_train <- train[,4,drop = FALSE] %>%
+  as.matrix()
 
 # Validation
 val <- data_train2 %>%
-  filter(validation == 1) %>%
-  select(x, y, MaskTemp)
+  filter(validation == 1)
 x_val <- val[,c(1,2)]
-y_val <- train[,3,drop = FALSE]
+y_val <- val[,4,drop = FALSE] %>%
+  as.matrix()
 
 # Test
 x_test <- data_test[,c(1,2)]
-y_test <- data_test[,3,drop = FALSE]
+y_test <- data_test[,4,drop = FALSE] %>%
+  as.matrix()
 
 # Save
 save(x_train, y_train,

@@ -56,9 +56,8 @@ makeModel <- function(pars, input_length) {
 #   network model object
 # - If test is 'grid', returns a list of model parameters and validation
 #   loss record across epochs
-fitModel <- function(pars, x_train, y_train, test = 'part_train') {
+fitModel <- function(pars, x_train, y_train, x_val = NULL, y_val = NULL, test = 'part_train') {
   # Constants
-  VAL_SPLIT <- 0.2
   LEARNING_RATE <- 0.001
   
   epochs <- pars[[3]]
@@ -78,7 +77,7 @@ fitModel <- function(pars, x_train, y_train, test = 'part_train') {
     history <- model %>% 
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size, 
-          validation_split = VAL_SPLIT,
+          validation_data = list(x_val, y_val),
           view_metrics = FALSE,
           verbose = 0)
     print(sprintf('Model %.0f Trained', model_num))
@@ -88,7 +87,7 @@ fitModel <- function(pars, x_train, y_train, test = 'part_train') {
     history <- model %>% 
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size, 
-          validation_split = VAL_SPLIT)
+          validation_data = list(x_val, y_val))
     beepr::beep()
     model
   } else if (test == 'all_train') { # Fully train data
