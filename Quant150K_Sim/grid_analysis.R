@@ -10,10 +10,8 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-# model <- read_csv('data/gridsearch_nn/quant150k_grid_nn.csv')
-# loss <- read_csv('data/gridsearch_nn/quant150k_grid_nn_val_mse.csv') %>%
-model <- read_csv('data/gridsearch_nn_trans/quant150k_grid_nn_trans.csv')
-loss <- read_csv('data/gridsearch_nn_trans/quant150k_grid_nn_trans_val_mse.csv') %>%
+model <- read_csv('data/gridsearch_nn/grid_nn.csv')
+loss <- read_csv('data/gridsearch_nn/grid_nn_val_mse.csv') %>%
   mutate(rmse = sqrt(val_mse)) %>%
   inner_join(model, by = 'model_num')
 
