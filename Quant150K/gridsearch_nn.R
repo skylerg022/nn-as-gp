@@ -19,6 +19,9 @@ source('eda.R')
 source('../HelperFunctions/MakeNNModel.R')
 source('../HelperFunctions/Defaults.R')
 
+# Make directories if needed
+dirCheck()
+
 # Read in data
 load('data/SimulatedTempsSplit.RData')
 
