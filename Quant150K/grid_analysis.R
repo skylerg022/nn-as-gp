@@ -10,8 +10,10 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-model <- read_csv('data/gridsearch_nn/grid_nn.csv')
-loss <- read_csv('data/gridsearch_nn/grid_nn_val_mse.csv') %>%
+# model <- read_csv('data/gridsearch_nn/grid_nn.csv')
+# loss <- read_csv('data/gridsearch_nn/grid_nn_val_mse.csv') %>%
+model <- read_csv('data/gridsearch_nn_trans/grid_nn_trans.csv')
+loss <- read_csv('data/gridsearch_nn_trans/grid_nn_trans_val_mse.csv') %>%
   mutate(rmse = sqrt(val_mse)) %>%
   inner_join(model, by = 'model_num')
 
@@ -50,6 +52,7 @@ loss_best %>%
   ggplot(aes(x = epoch, y = rmse, 
              group = model_num, 
              col = as.factor(model_num))) +
+  geom_line(alpha = 0.3) +
   geom_smooth(se = FALSE) +
   labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
   theme_bw()

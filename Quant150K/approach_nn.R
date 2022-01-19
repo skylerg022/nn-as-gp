@@ -9,7 +9,7 @@ source('../HelperFunctions/MakeNNModel.R')
 source('../HelperFunctions/Defaults.R')
 
 # Read in data
-load('data/SimulatedTempsSplit.RData')
+load('data/SatelliteTempsSplit.RData')
 
 fit_network <- function(type, model_pars, trainval_only = 0) {
   data_train <- rbind(cbind(x_train, y_train),
@@ -167,11 +167,18 @@ fit_network <- function(type, model_pars, trainval_only = 0) {
 }
 
 
-# One of the top five performers in sim_satellite nn grid search (1/15/2022)
-model_pars <- c(n_layers = 16, layer_width = 2^6,
-                epochs = 50, batch_size = 2^6,
+# One of the top five performers in satellite nn grid search (1/18/2022)
+model_pars <- c(n_layers = 1, layer_width = 2^7,
+                epochs = 100, batch_size = 2^7,
                 decay_rate = 0, dropout_rate = 0, 
-                model_num = 25)
+                model_num = 86)
 
 fit_nn <- fit_network(type = 'nn', model_pars = model_pars, trainval_only = 0)
+
+# One of the top five performers in satellite nn grid search (1/18/2022)
+model_pars <- c(n_layers = 4, layer_width = 2^3,
+                epochs = 50, batch_size = 2^6,
+                decay_rate = 3.828484e-05, dropout_rate = 0, 
+                model_num = 153)
+
 fit_nn_trans <- fit_network(type = 'nn_trans', model_pars = model_pars, trainval_only = 0)
