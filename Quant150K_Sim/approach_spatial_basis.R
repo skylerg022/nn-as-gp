@@ -10,13 +10,228 @@ library(keras)
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
+
 source('../HelperFunctions/MakeNNModel.R')
 source('../HelperFunctions/Defaults.R')
 
+# Read in data
+load('data/SimulatedTempsSplit.RData')
+
+# Create grid of bases/knots ----------------------------------------------------
+
+# Multi-resolution spatial basis function expansion
+# Inputs:
+# - x_train: matrix of all training data
+# - sqrt_n_knots: a vector of integers. Larger integers means a
+#     finer grid of basis function expansions.
+# - min_n: an integer for the required minimum sample size for
+#     a basis/knot to be kept for training
+# Output:
+# - Basis function expansion of various resolutions where all
+#     bases have at least min_n non-zero values (n_min local observations)
+multiResBases <- function(x_train, x_test, sqrt_n_knots, threshold_type, threshold) {
+  ## Calculate Wendland basis
+  wendland <- function(d){
+    ((1-d)^6) * (35*d^2 + 18*d + 3) / 3
+  }
+  
+  xmin <- min(x_train$x)
+  xmax <- max(x_train$x)
+  ymin <- min(x_train$y)
+  ymax <- max(x_train$y)
+  
+  x_bases <- matrix(nrow = nrow(x_train), ncol = 0)
+  x_bases_test <- matrix(nrow = nrow(x_test), ncol = 0)
+  
+  for (knots in sqrt_n_knots) {
+    
+    # Get basis grid X locations
+    temp <- seq(xmin,
+                xmax,
+                length = knots + 1)
+    offset_x <- (temp[2] - temp[1]) / 2
+    # offset_x <- 0
+    grid_x <- seq(xmin + offset_x,
+                  xmax - offset_x,
+                  length = knots)
+
+    # Get basis grid Y locations
+    temp <- seq(ymin,
+                ymax,
+                length = knots + 1)
+    offset_y <- (temp[2] - temp[1]) / 2
+    # offset_y <- 0
+    grid_y <- seq(ymin + offset_y,
+                  ymax - offset_y,
+                  length = knots)
+
+    bases <- expand.grid(grid_x, grid_y)
+    # qplot(bases[,1], bases[,2], geom = 'point')
+
+    # theta <- 1.5 * min(offset_x * 2, offset_y * 2)
+    theta <- 2 * min((grid_x[2] - grid_x[1]), (grid_y[2] - grid_y[1]))
+    
+    D <- fields::rdist(x_train[, c('x', 'y')], bases) / theta
+    X <- wendland(D)
+    X[D > 1] <- 0
+    rm(D)
+    
+    colnames(X) <- paste0("X", knots, '_', 1:ncol(X))
+    
+    # Assess which bases to keep
+    if (threshold_type == 'nonzero') {
+      n_nonzero <- colSums(X != 0)
+      good_bases_idx <- which(n_nonzero >= threshold)
+    } else if (threshold_type == 'colsum') {
+      sums <- colSums(X)
+      good_bases_idx <- which(sums >= threshold)
+    } else {
+      err <- paste0("Threshold type not recognized. Currently, only 'nonzero' ", 
+                    "and 'colsum' are allowed.")
+      stop(err)
+    }
+    x_bases <- cbind(x_bases, X[,good_bases_idx])
+    
+    # Basis function expansion for x_test on training bases
+    D <- fields::rdist(x_test[, c('x', 'y')], bases[good_bases_idx,]) / theta
+    X <- wendland(D)
+    X[D > 1] <- 0
+    rm(D)
+    x_bases_test <- cbind(x_bases_test, X)
+    
+    rm(X)
+  }
+  
+  return(list(x_train = x_bases,
+              x_test = x_bases_test))
+}
+
+x_bases <- multiResBases(x_train = x_train,
+                         x_test = x_val,
+                         sqrt_n_knots = c(2, 4, 6, 8, 10, 12, 14, 16, 18, 20),
+                         threshold_type = 'colsum',
+                         threshold = 30)
+
+
+# Observe one of the bases
+# data_train2 %>%
+#   mutate(across(c(x,y), round, digits = 2)) %>%
+#   group_by(x, y) %>%
+#   summarize(basis = mean(X1)) %>%
+#   ggplot(aes(x, y, fill = basis)) +
+#   geom_raster()
+
+
+# Fit a neural network to bases -------------------------------------------
+
+model_pars <- c(n_layers = 3, layer_width = 2^7,
+                epochs = 5, batch_size = 2^7,
+                decay_rate = 0, dropout_rate = 0, 
+                model_num = 1)
+
+model <- fitModel(model_pars, cbind(as.matrix(x_train), x_bases$x_train), y_train,
+                  cbind(as.matrix(x_val), x_bases$x_test), y_val, test = 'part_train')
+
+
+# Predictions after fitting 80% of training set
+Predicted <- model %>%
+  predict(rbind(cbind(as.matrix(x_train), x_bases$x_train),
+                cbind(as.matrix(x_val), x_bases$x_test)))
+
+data_pred <- cbind(rbind(x_train, x_val),
+                   rbind(y_train, y_val), 
+                   Predicted) %>%
+  # clip predictions to max/min of observed data
+  mutate(Predicted = ifelse(Predicted > max(TrueTemp), max(TrueTemp), Predicted),
+         Predicted = ifelse(Predicted < min(TrueTemp), min(TrueTemp), Predicted)) %>%
+  pivot_longer(cols = c(TrueTemp, Predicted),
+               names_to = 'type',
+               values_to = 'z')
+
+simple_train <- data_pred %>%
+  mutate(across(c(x,y), round, digits = 2)) %>%
+  group_by(x, y, type) %>%
+  summarize(Temp = mean(z))
+
+simple_train %>%
+  ggplot(aes(x, y, fill = Temp)) +
+  geom_raster() +
+  facet_wrap(~type) +
+  scale_fill_continuous(type = 'viridis') +
+  theme_minimal()
+
+
+# Test Predictions --------------------------------------------------------
+
+x_bases <- multiResBases(x_train = rbind(x_train, x_val),
+                         x_test = x_test,
+                         sqrt_n_knots = c(2, 4, 6, 8, 10, 12, 14, 16, 18, 20),
+                         threshold_type = 'colsum',
+                         threshold = 30)
+
+model <- fitModel(model_pars, 
+                  cbind(as.matrix(rbind(x_train, x_val)), x_bases$x_train), 
+                  rbind(y_train, y_val), 
+                  test = 'all_train')
+
+# Predictions (including test set) after fitting 100% of training set
+Predicted <- model %>%
+  predict(cbind(as.matrix(rbind(x_train, x_val, x_test)),
+                rbind(x_bases$x_train, x_bases$x_test)))
+
+data_pred <- cbind(rbind(x_train, x_val, x_test),
+                   rbind(y_train, y_val, y_test), 
+                   Predicted) %>%
+  pivot_longer(cols = c(TrueTemp, Predicted),
+               names_to = 'type',
+               values_to = 'z')
+
+simple_train <- data_pred %>%
+  mutate(across(c(x,y), round, digits = 2)) %>%
+  group_by(x, y, type) %>%
+  summarize(z = mean(z))
+
+# Just test performance
+simple_train %>%
+  ggplot(aes(x, y, fill = z)) +
+  geom_raster() +
+  geom_raster(data = cbind(rbind(x_train, x_val),
+                           rbind(y_train, y_val)),
+              mapping = aes(x, y, fill = min(simple_train$z))) +
+  facet_wrap(~type) +
+  scale_fill_continuous(type = 'viridis') +
+  theme_minimal()
+
+# All data prediction
+simple_train %>%
+  ggplot(aes(x, y, fill = z)) +
+  geom_raster() +
+  facet_wrap(~type) +
+  scale_fill_continuous(type = 'viridis') +
+  theme_minimal()
+
+
+# Evaluate test RMSE
+yhat <- model %>%
+  predict(cbind(as.matrix(x_test), x_bases$x_test))
+sqrt(mean( (y_test - yhat)^2 ))
+
+# Evaluate train RMSE
+yhat <- model %>%
+  predict(x_bases$x_train)
+sqrt(mean( (c(y_train, y_val) - yhat)^2 ))
+
+
+
+
+
+
+
+
 
 # Read in data
-load('data/AllSimulatedTemps.RData')
-data_train <- all.sim.data %>%
+load('data/AllSatelliteTemps.RData')
+data_train <- all.sat.temps %>%
   rename(x = Lon, y = Lat) %>%
   filter(!is.na(MaskTemp)) %>%
   # Because blocks of data are in test dataset, validation set should be blocks
@@ -28,10 +243,10 @@ data_train <- all.sim.data %>%
                                  ((x > -92.5 & x < -91.75) & (y > 36 & y < 36.75))),
                               1, 0)) %>%
   arrange(validation)
-data_test <- all.sim.data %>%
+data_test <- all.sat.temps %>%
   rename(x = Lon, y = Lat) %>%
   filter(is.na(MaskTemp))
-rm(all.sim.data)
+rm(all.sat.temps)
 
 # Create grid of bases/knots ----------------------------------------------------
 
