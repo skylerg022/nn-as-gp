@@ -17,100 +17,12 @@ source('../HelperFunctions/Defaults.R')
 # Read in data
 load('data/SimulatedTempsSplit.RData')
 
-# Create grid of bases/knots ----------------------------------------------------
-
-# Multi-resolution spatial basis function expansion
-# Inputs:
-# - x_train: matrix of all training data
-# - sqrt_n_knots: a vector of integers. Larger integers means a
-#     finer grid of basis function expansions.
-# - min_n: an integer for the required minimum sample size for
-#     a basis/knot to be kept for training
-# Output:
-# - Basis function expansion of various resolutions where all
-#     bases have at least min_n non-zero values (n_min local observations)
-multiResBases <- function(x_train, x_test, sqrt_n_knots, threshold_type, threshold) {
-  ## Calculate Wendland basis
-  wendland <- function(d){
-    ((1-d)^6) * (35*d^2 + 18*d + 3) / 3
-  }
-  
-  xmin <- min(x_train$x)
-  xmax <- max(x_train$x)
-  ymin <- min(x_train$y)
-  ymax <- max(x_train$y)
-  
-  x_bases <- matrix(nrow = nrow(x_train), ncol = 0)
-  x_bases_test <- matrix(nrow = nrow(x_test), ncol = 0)
-  
-  for (knots in sqrt_n_knots) {
-    
-    # Get basis grid X locations
-    temp <- seq(xmin,
-                xmax,
-                length = knots + 1)
-    offset_x <- (temp[2] - temp[1]) / 2
-    # offset_x <- 0
-    grid_x <- seq(xmin + offset_x,
-                  xmax - offset_x,
-                  length = knots)
-
-    # Get basis grid Y locations
-    temp <- seq(ymin,
-                ymax,
-                length = knots + 1)
-    offset_y <- (temp[2] - temp[1]) / 2
-    # offset_y <- 0
-    grid_y <- seq(ymin + offset_y,
-                  ymax - offset_y,
-                  length = knots)
-
-    bases <- expand.grid(grid_x, grid_y)
-    # qplot(bases[,1], bases[,2], geom = 'point')
-
-    # theta <- 1.5 * min(offset_x * 2, offset_y * 2)
-    theta <- 2 * min((grid_x[2] - grid_x[1]), (grid_y[2] - grid_y[1]))
-    
-    D <- fields::rdist(x_train[, c('x', 'y')], bases) / theta
-    X <- wendland(D)
-    X[D > 1] <- 0
-    rm(D)
-    
-    colnames(X) <- paste0("X", knots, '_', 1:ncol(X))
-    
-    # Assess which bases to keep
-    if (threshold_type == 'nonzero') {
-      n_nonzero <- colSums(X != 0)
-      good_bases_idx <- which(n_nonzero >= threshold)
-    } else if (threshold_type == 'colsum') {
-      sums <- colSums(X)
-      good_bases_idx <- which(sums >= threshold)
-    } else {
-      err <- paste0("Threshold type not recognized. Currently, only 'nonzero' ", 
-                    "and 'colsum' are allowed.")
-      stop(err)
-    }
-    x_bases <- cbind(x_bases, X[,good_bases_idx])
-    
-    # Basis function expansion for x_test on training bases
-    D <- fields::rdist(x_test[, c('x', 'y')], bases[good_bases_idx,]) / theta
-    X <- wendland(D)
-    X[D > 1] <- 0
-    rm(D)
-    x_bases_test <- cbind(x_bases_test, X)
-    
-    rm(X)
-  }
-  
-  return(list(x_train = x_bases,
-              x_test = x_bases_test))
-}
-
 x_bases <- multiResBases(x_train = x_train,
                          x_test = x_val,
                          sqrt_n_knots = c(2, 4, 6, 8, 10, 12, 14, 16, 18, 20),
-                         threshold_type = 'colsum',
-                         threshold = 30)
+                         thresh_type = 'colsum',
+                         thresh = 30,
+                         thresh_max = 0.95)
 
 
 # Observe one of the bases
@@ -124,19 +36,19 @@ x_bases <- multiResBases(x_train = x_train,
 
 # Fit a neural network to bases -------------------------------------------
 
-model_pars <- c(n_layers = 3, layer_width = 2^7,
+model_pars <- c(n_layers = 1, layer_width = 2^7,
                 epochs = 5, batch_size = 2^7,
                 decay_rate = 0, dropout_rate = 0, 
                 model_num = 1)
 
-model <- fitModel(model_pars, cbind(as.matrix(x_train), x_bases$x_train), y_train,
-                  cbind(as.matrix(x_val), x_bases$x_test), y_val, test = 'part_train')
+model <- fitModel(model_pars, cbind(x_bases$x_train), y_train,
+                  cbind(x_bases$x_test), y_val, test = 'part_train')
 
 
 # Predictions after fitting 80% of training set
 Predicted <- model %>%
-  predict(rbind(cbind(as.matrix(x_train), x_bases$x_train),
-                cbind(as.matrix(x_val), x_bases$x_test)))
+  predict(rbind(cbind(x_bases$x_train),
+                cbind(x_bases$x_test)))
 
 data_pred <- cbind(rbind(x_train, x_val),
                    rbind(y_train, y_val), 
