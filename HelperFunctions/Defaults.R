@@ -77,13 +77,13 @@ multiResBases <- function(x_train, x_test, sqrt_n_knots,
     colnames(X) <- paste0("X", knots, '_', 1:ncol(X))
     
     # Assess which bases to keep
-    if (threshold_type == 'nonzero') {
+    if (thresh_type == 'nonzero') {
       n_nonzero <- colSums(X != 0)
-      good_bases_idx <- which(n_nonzero >= threshold)
-    } else if (threshold_type == 'colsum') {
+      good_bases_idx <- which(n_nonzero >= thresh)
+    } else if (thresh_type == 'colsum') {
       sums <- colSums(X)
       max_val <- apply(X, 2, max)
-      good_bases_idx <- which( (sums >= threshold) & (max_val > thresh_max) )
+      good_bases_idx <- which( (sums >= thresh) & (max_val > thresh_max) )
     } else {
       err <- paste0("Threshold type not recognized. Currently, only 'nonzero' ", 
                     "and 'colsum' are allowed.")
