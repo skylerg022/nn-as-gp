@@ -104,3 +104,34 @@ multiResBases <- function(x_train, x_test, sqrt_n_knots,
   return(list(x_train = x_bases,
               x_test = x_bases_test))
 }
+
+
+
+
+
+# Make Lee2018 Grid -------------------------------------------------------
+
+makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
+                            layer_width = c(2^7, 2^8, 2^9, 2^10, 2^11)) {
+  temp <- expand.grid(n_layers = n_layers,
+                      layer_width = layer_width)
+  grid <- do.call("rbind", 
+                  replicate(250, temp, simplify = FALSE))
+  n_grid <- nrow(grid)
+  grid <- grid %>%
+    mutate(learning_rate = exp( runif(n_grid, log(10^(-4)), log(0.2)) ),
+           weight_decay = exp( runif(n_grid, log(10^(-8)), log(1)) ),
+           epochs = 30,
+           batch_size = sample(c(2^4, 2^5, 2^6, 2^7, 2^8),
+                               size = n_grid, replace = TRUE),
+           sigma_w = runif(n_grid, 0.01, 2.5),
+           sigma_b = runif(n_grid, 0, 1.5)) %>%
+    # filter out observations with more than 800,000 parameters
+    filter((layer_width^2)*(n_layers-1) <= 8e5) %>%
+    arrange(desc(layer_width),
+            desc(n_layers)) %>%
+    mutate(model_num = row_number())
+  
+  return(grid)
+}
+

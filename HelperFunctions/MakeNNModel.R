@@ -105,6 +105,117 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL, y_val = NULL, test = 
 }
 
 
+
+# Lee 2018 Paper Model Fitting Funtions -------------------------------------
+
+# Make a model following model parameter specifications
+# Input:
+# - pars: a numeric vector of length 7 giving model parameters in 
+#   the following order:
+#   - n_layers, layer_width, learning_rate, weight_decay, epochs, 
+#     batch_size, sigma_w, sigma_b, model_num
+# Output: Customized neural network model object
+makeModelLee2018 <- function(pars, input_length) {
+  
+  n_layers <- pars[[1]]
+  layer_width <- pars[[2]]
+  learning_rate <- pars[[3]]
+  weight_decay <- pars[[4]]
+  epochs <- pars[[5]]
+  batch_size <- pars[[6]]
+  sigma_w <- pars[[7]]
+  sigma_b <- pars[[8]]
+  model_num <- pars[[9]]
+  
+  addLayers <- function(model, n_layers) {
+    if (n_layers > 0) {
+      model <- addLayers(model, n_layers-1) %>%
+        layer_dense(units = layer_width, activation = 'relu',
+                    kernel_initializer = initializer_random_normal(stddev = sigma_w/sqrt(layer_width)),
+                    bias_initializer = initializer_random_normal(stddev = sigma_b),
+                    kernel_regularizer = regularizer_l2(weight_decay),
+                    bias_regularizer = regularizer_l2(weight_decay))
+    }
+    model
+  }
+  
+  # Set up compiler
+  model <- keras_model_sequential() %>%
+    layer_dense(units = layer_width, input_shape = c(input_length), activation = 'relu') %>%
+    layer_dropout(rate = dropout_rate) %>%
+    addLayers(n_layers - 1) %>%
+    layer_dense(units = 1)
+  
+  return(model)
+}
+
+# fitModel
+# Fit model with structural and learning parameters specified
+#  as well as training data
+# Input:
+# - pars: a numeric vector of length 7 giving model parameters in 
+#   the following order:
+#   - n_layers, layer_width, learning_rate, weight_decay, epochs, 
+#     batch_size, sigma_w, sigma_b, model_num
+# - x_train: training
+# - test: a string value of 'part_train', 'all_train', or 'grid'
+# Output:
+# - If test is 'part_train' or 'all_train', returns a customized neural
+#   network model object
+# - If test is 'grid', returns a list of model parameters and validation
+#   loss record across epochs
+fitModelLee2018 <- function(pars, x_train, y_train, x_val = NULL, 
+                            y_val = NULL, test = 'part_train') {
+  
+  n_layers <- pars[[1]]
+  learning_rate <- pars[[3]]
+  epochs <- pars[[5]]
+  batch_size <- pars[[6]]
+  model_num <- pars[[9]]
+  
+  input_length <- ncol(x_train)
+  
+  model <- makeModel(pars, input_length)
+  model %>%
+    compile(loss = 'mse',
+            optimizer = optimizer_adam(learning_rate = learning_rate))
+  
+  if(test == 'grid') { # Evaluate performance on val set; no print to console
+    history <- model %>% 
+      fit(x_train, y_train, 
+          epochs = epochs, batch_size = batch_size, 
+          validation_data = list(x_val, y_val),
+          view_metrics = FALSE,
+          verbose = 0)
+    print(sprintf('Model %.0f Trained', model_num))
+    list(pars = pars,
+         val_loss = history$metrics$val_loss)
+  } else if (test == 'part_train') { # Evaluate performance on val set
+    history <- model %>% 
+      fit(x_train, y_train, 
+          epochs = epochs, batch_size = batch_size, 
+          validation_data = list(x_val, y_val))
+    beepr::beep()
+    model
+  } else if (test == 'all_train') { # Fully train data
+    model %>% 
+      fit(x_train, y_train, 
+          epochs = epochs, 
+          batch_size = batch_size)
+    beepr::beep()
+    model
+  } else {
+    err_message <- paste0('Model fitting test not recognized. Please assign test ',
+                          'as "grid", "part_train", or "all_train".')
+    stop(err_message)
+  }
+}
+
+
+
+
+
+
 # Other functions ---------------------------------------------------------
 
 # predictorStats

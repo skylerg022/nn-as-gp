@@ -9,6 +9,9 @@ library(tidyverse)
 library(keras)
 library(parallel)
 
+# Set seed
+set.seed(2422)
+
 # Helper functions and data ------------------------------------------------------------
 
 # Set working directory if using RStudio
@@ -16,6 +19,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 source('eda.R')
+rm(list = ls())
 source('../HelperFunctions/MakeNNModel.R')
 source('../HelperFunctions/Defaults.R')
 
@@ -36,17 +40,19 @@ gridsearch <- function(n_cores = 20) {
   # x_train <- x_scaled[1:n_train,]
   # x_val <- x_scaled[-c(1:n_train),]
   
-  grid <- expand.grid(n_layers = 1,
-                      layer_width = 2^7,
-                      epochs = 20, 
-                      batch_size = 2^7,
-                      decay_rate = 0,
-                      dropout_rate = 0,
-                      thresh_colsums = seq(0, 100, by = 10),
-                      thresh_max = seq(0, 0.95, by = 0.05)) %>%
-    mutate(decay_rate = decay_rate / 
-             (n_train %/% batch_size),
-           model_num = 1:n())
+  # grid <- expand.grid(n_layers = 1,
+  #                     layer_width = 2^7,
+  #                     epochs = 20, 
+  #                     batch_size = 2^7,
+  #                     decay_rate = 0,
+  #                     dropout_rate = 0,
+  #                     thresh_colsums = seq(0, 100, by = 10),
+  #                     thresh_max = seq(0, 0.95, by = 0.05)) %>%
+  #   mutate(decay_rate = decay_rate / 
+  #            (n_train %/% batch_size),
+  #          model_num = 1:n())
+  
+  grid <- makeGridLee2018()
   
   # Make grid into input class: list
   grid_list <- split(grid, 1:nrow(grid))
@@ -63,13 +69,13 @@ gridsearch <- function(n_cores = 20) {
                         function(pars) {
                           x_bases <- multiResBases(x_train = x_train,
                                                    x_test = x_val,
-                                                   sqrt_n_knots = c(2, 4, 6, 8, 10, 12, 14, 16, 18, 20),
+                                                   sqrt_n_knots = c(4),
                                                    thresh_type = 'colsum',
-                                                   thresh = pars[7],
-                                                   thresh_max = pars[8])
+                                                   thresh = 0,
+                                                   thresh_max = 0)
                           
-                          fitModel(pars, x_bases$x_train, y_train, 
-                                   x_bases$x_test, y_val, test = 'grid') 
+                          fitModelLee2018(pars, x_bases$x_train, y_train, 
+                                          x_bases$x_test, y_val, test = 'grid') 
                           },
                         mc.cores = n_cores, mc.silent = FALSE)
                         # mc.cleanup = FALSE, mc.allow.recursive = FALSE)
