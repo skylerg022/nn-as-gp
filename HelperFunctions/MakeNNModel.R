@@ -141,8 +141,12 @@ makeModelLee2018 <- function(pars, input_length) {
   
   # Set up compiler
   model <- keras_model_sequential() %>%
-    layer_dense(units = layer_width, input_shape = c(input_length), activation = 'relu') %>%
-    layer_dropout(rate = dropout_rate) %>%
+    layer_dense(units = layer_width, input_shape = c(input_length), 
+                activation = 'relu',
+                kernel_initializer = initializer_random_normal(stddev = sigma_w/sqrt(layer_width)),
+                bias_initializer = initializer_random_normal(stddev = sigma_b),
+                kernel_regularizer = regularizer_l2(weight_decay),
+                bias_regularizer = regularizer_l2(weight_decay)) %>%
     addLayers(n_layers - 1) %>%
     layer_dense(units = 1)
   
@@ -175,7 +179,7 @@ fitModelLee2018 <- function(pars, x_train, y_train, x_val = NULL,
   
   input_length <- ncol(x_train)
   
-  model <- makeModel(pars, input_length)
+  model <- makeModelLee2018(pars, input_length)
   model %>%
     compile(loss = 'mse',
             optimizer = optimizer_adam(learning_rate = learning_rate))
@@ -186,7 +190,10 @@ fitModelLee2018 <- function(pars, x_train, y_train, x_val = NULL,
           epochs = epochs, batch_size = batch_size, 
           validation_data = list(x_val, y_val),
           view_metrics = FALSE,
-          verbose = 0)
+          verbose = 0,
+          callbacks = list(callback_early_stopping(monitor = 'val_loss',
+                                                   patience = 5, 
+                                                   restore_best_weights = TRUE)))
     print(sprintf('Model %.0f Trained', model_num))
     list(pars = pars,
          val_loss = history$metrics$val_loss)
