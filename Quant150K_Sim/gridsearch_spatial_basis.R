@@ -40,19 +40,19 @@ gridsearch <- function(n_cores = 20) {
   # x_train <- x_scaled[1:n_train,]
   # x_val <- x_scaled[-c(1:n_train),]
   
-  # grid <- expand.grid(n_layers = 1,
-  #                     layer_width = 2^7,
-  #                     epochs = 20, 
-  #                     batch_size = 2^7,
-  #                     decay_rate = 0,
-  #                     dropout_rate = 0,
-  #                     thresh_colsums = seq(0, 100, by = 10),
-  #                     thresh_max = seq(0, 0.95, by = 0.05)) %>%
-  #   mutate(decay_rate = decay_rate / 
-  #            (n_train %/% batch_size),
-  #          model_num = 1:n())
+  grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16),
+                      layer_width = c(2^3, 2^7, 2^8, 2^9, 2^10),
+                      epochs = 30,
+                      batch_size = c(2^6, 2^7, 2^8),
+                      decay_rate = c(0, 0.05),
+                      dropout_rate = c(0, 0.1)) %>%
+    filter(layer_width^2 * (n_layers-1) < 800000) %>%
+    arrange(desc(layer_width^2 * (n_layers-1))) %>% # Largest to smallest models
+    mutate(decay_rate = decay_rate /
+             (n_train %/% batch_size),
+           model_num = row_number())
   
-  grid <- makeGridLee2018()
+  # grid <- makeGridLee2018()
   
   # Make grid into input class: list
   grid_list <- split(grid, 1:nrow(grid))
@@ -74,18 +74,12 @@ gridsearch <- function(n_cores = 20) {
                                                    thresh = 0,
                                                    thresh_max = 0)
                           
-                          fitModelLee2018(pars, x_bases$x_train, y_train, 
+                          fitModel(pars, x_bases$x_train, y_train, 
                                           x_bases$x_test, y_val, test = 'grid') 
                           },
                         mc.cores = n_cores, mc.silent = FALSE)
                         # mc.cleanup = FALSE, mc.allow.recursive = FALSE)
   })
-  
-  ## BEGINNING OF LOG CODE
-  # fileConn <- file("log_gridfit.txt")
-  # open(fileConn, open = 'a')
-  # writeLines(c("Hello","World"), fileConn)
-  # close(fileConn)
   
   # Convert results from list into dataframe
   val_df <- matrix(NA, nrow = 0, ncol = 3,
@@ -99,8 +93,8 @@ gridsearch <- function(n_cores = 20) {
   }
   
   # Write data to csv
-  write_csv(grid, paste0('data/quant150k_grid_basis.csv'))
-  write_csv(val_df, paste0('data/quant150k_grid_basis_val_mse.csv'))
+  write_csv(grid, paste0('data/grid_basis.csv'))
+  write_csv(val_df, paste0('data/grid_basis_val_mse.csv'))
   
   return()
 }

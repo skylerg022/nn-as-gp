@@ -19,7 +19,7 @@ load('data/SimulatedTempsSplit.RData')
 
 x_bases <- multiResBases(x_train = x_train,
                          x_test = x_val,
-                         sqrt_n_knots = c(4, 20),
+                         sqrt_n_knots = c(4),
                          thresh_type = 'colsum',
                          thresh = 0,
                          thresh_max = 0.75)
@@ -36,13 +36,23 @@ x_bases <- multiResBases(x_train = x_train,
 
 # Fit a neural network to bases -------------------------------------------
 
-model_pars <- c(n_layers = 1, layer_width = 2^11,
-                epochs = 20, batch_size = 2^7,
-                decay_rate = 0, dropout_rate = 0, 
-                model_num = 1)
+# model_pars <- c(n_layers = 1, layer_width = 2^11,
+#                 epochs = 20, batch_size = 2^7,
+#                 decay_rate = 0, dropout_rate = 0, 
+#                 model_num = 1)
+# 
+# model <- fitModel(model_pars, x_bases$x_train, y_train,
+#                   x_bases$x_test, y_val, test = 'part_train')
 
-model <- fitModel(model_pars, x_bases$x_train, y_train,
-                  x_bases$x_test, y_val, test = 'part_train')
+model_pars <- c(n_layers = 10, layer_width = 2^8,
+                learning_rate = 0.0005590222,
+                weight_decay = 1.350768e-06,
+                epochs = 20, batch_size = 32,
+                sigma_w = 2.232558, sigma_b = 0.153182550,
+                model_num = 1250)
+
+model <- fitModelLee2018(model_pars, x_bases$x_train, y_train,
+                         x_bases$x_test, y_val, test = 'part_train')
 
 
 # Predictions after fitting 80% of training set
@@ -82,7 +92,7 @@ x_bases <- multiResBases(x_train = rbind(x_train, x_val),
                          thresh = 0,
                          thresh_max = 0.75)
 
-model <- fitModel(model_pars, 
+model <- fitModelLee2018(model_pars, 
                   x_bases$x_train, 
                   rbind(y_train, y_val), 
                   test = 'all_train')

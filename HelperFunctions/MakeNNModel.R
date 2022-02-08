@@ -79,7 +79,10 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL, y_val = NULL, test = 
           epochs = epochs, batch_size = batch_size, 
           validation_data = list(x_val, y_val),
           view_metrics = FALSE,
-          verbose = 0)
+          verbose = 0,
+          callbacks = list(callback_early_stopping(monitor = 'val_loss',
+                                                   patience = 5, 
+                                                   restore_best_weights = TRUE)))
     print(sprintf('Model %.0f Trained', model_num))
     list(pars = pars,
          val_loss = history$metrics$val_loss)

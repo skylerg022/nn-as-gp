@@ -91,8 +91,8 @@ gridsearch <- function(type = 'nn', n_cores = 20) {
   }
   
   # Write data to csv
-  write_csv(grid, paste0('data/quant150k_grid_', type, '.csv'))
-  write_csv(val_df, paste0('data/quant150k_grid_', type, '_val_mse.csv'))
+  write_csv(grid, paste0('data/grid_', type, '.csv'))
+  write_csv(val_df, paste0('data/grid_', type, '_val_mse.csv'))
   
   return()
 }
