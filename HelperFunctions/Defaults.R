@@ -14,7 +14,9 @@ dirCheck <- function() {
   return()
 }
 
-# Create grid of bases/knots ----------------------------------------------------
+
+
+# Create basis/knot inputs ----------------------------------------------------
 
 # Multi-resolution spatial basis function expansion
 # Inputs:
@@ -104,8 +106,6 @@ multiResBases <- function(x_train, x_test, sqrt_n_knots,
   return(list(x_train = x_bases,
               x_test = x_bases_test))
 }
-
-
 
 
 

@@ -18,18 +18,19 @@ set.seed(2422)
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
-source('eda.R')
-rm(list = ls())
-source('../HelperFunctions/MakeNNModel.R')
-source('../HelperFunctions/Defaults.R')
 
-# Make directories if needed
+# Load functions and make directories if needed
+source('../HelperFunctions/Defaults.R')
+source('../HelperFunctions/MakeNNModel.R')
 dirCheck()
+
+# Create and read in revised data
+source('eda.R')
 
 # Read in data
 load('data/SimulatedTempsSplit.RData')
 
-gridsearch <- function(n_cores = 20) {
+gridsearch <- function(modeltype = 'custom', n_cores = 20) {
   
   # Neural Network --------------------------------------------------------
   
@@ -40,28 +41,24 @@ gridsearch <- function(n_cores = 20) {
   # x_train <- x_scaled[1:n_train,]
   # x_val <- x_scaled[-c(1:n_train),]
   
-  grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16),
-                      layer_width = c(2^3, 2^7, 2^8, 2^9, 2^10),
-                      epochs = 30,
-                      batch_size = c(2^6, 2^7, 2^8),
-                      decay_rate = c(0, 0.05),
-                      dropout_rate = c(0, 0.1)) %>%
-    filter(layer_width^2 * (n_layers-1) < 800000) %>%
-    arrange(desc(layer_width^2 * (n_layers-1))) %>% # Largest to smallest models
-    mutate(decay_rate = decay_rate /
-             (n_train %/% batch_size),
-           model_num = row_number())
-  
-  # grid <- makeGridLee2018()
+  if (modeltype == 'custom') {
+    grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16),
+                        layer_width = c(2^3, 2^7, 2^8, 2^9, 2^10),
+                        epochs = 30,
+                        batch_size = c(2^6, 2^7, 2^8),
+                        decay_rate = c(0, 0.05),
+                        dropout_rate = c(0, 0.1)) %>%
+      filter(layer_width^2 * (n_layers-1) < 800000) %>%
+      arrange(desc(layer_width^2 * (n_layers-1))) %>% # Largest to smallest models
+      mutate(decay_rate = decay_rate /
+               (n_train %/% batch_size),
+             model_num = row_number())
+  } else if (modeltype == 'lee2018') {
+    grid <- makeGridLee2018()
+  }
   
   # Make grid into input class: list
   grid_list <- split(grid, 1:nrow(grid))
-  
-  # NORMAL TIME TO PROCESS ONE OF THE NN PARAMETER SETS
-  # time_unicore <- system.time({
-  #   set.seed(1812)
-  #   lapply(grid_list, fitModel)
-  # })
   
   # Use at most the number of cores available on server
   time <- system.time({
@@ -75,7 +72,9 @@ gridsearch <- function(n_cores = 20) {
                                                    thresh_max = 0)
                           
                           fitModel(pars, x_bases$x_train, y_train, 
-                                          x_bases$x_test, y_val, test = 'grid') 
+                                   x_bases$x_test, y_val,
+                                   modeltype = modeltype,
+                                   test = 'grid') 
                           },
                         mc.cores = n_cores, mc.silent = FALSE)
                         # mc.cleanup = FALSE, mc.allow.recursive = FALSE)
@@ -93,12 +92,12 @@ gridsearch <- function(n_cores = 20) {
   }
   
   # Write data to csv
-  write_csv(grid, paste0('data/grid_basis.csv'))
-  write_csv(val_df, paste0('data/grid_basis_val_mse.csv'))
+  write_csv(grid, paste0('data/grid_basis_', modeltype, '.csv'))
+  write_csv(val_df, paste0('data/grid_basis_', modeltype, '_val_mse.csv'))
   
   return()
 }
 
 n_cores <- 30
-gridsearch(n_cores = n_cores)
+gridsearch(modeltype = 'custom', n_cores = n_cores)
 
