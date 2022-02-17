@@ -1,0 +1,25 @@
+
+Gridsearch Notes
+
+General
+- All Lee2018 gridsearches had a handful of NN setups that failed NN setup.
+  The learning rates of these NNs were much higher (e^(-4), 1/e) than those
+  NNs that fit (e^(-10), e^(-1)).
+- RMSE suffers more often for NNs with learning rate larger than e^(-3) or
+  weight decay larger than e^(-5). Performance is MUCH worse for both high
+  learning rate and weight decay.
+
+Lat-long NN
+- Deep NNs (8 and 16 hidden layers) had convergence to two val RMSE's
+## Lee2018
+- 1 or 2 layers, any width between 64 and 2048 great performance
+- Lower batch sizes tend to have lower RMSE
+- Best val RMSE 1.19
+  - 16 layers 128 wide, low learning rate, batch size 16
+## Custom
+- Layer width of 64/128 better than 8, depth does not matter
+- Batch size of 64 generally has better RMSE
+- Best val RMSE 1.23
+  - 16 layers 128 wide, 100 epochs, batch size 256
+
+
