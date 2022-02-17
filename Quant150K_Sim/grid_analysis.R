@@ -10,75 +10,106 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
+source('../HelperFunctions/GridsearchPlots.R')
+
+theme_set(theme_bw())
+
+# NN ----------------------------------------------------------------------
+
+## Lee2018 Gridsearch ------------------------------------------------------
+
+filename1 <- 'data/gridsearch_nn/grid_nn_lee2018'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
+
+## Custom Gridsearch ------------------------------------------------------
+
+filename2 <- 'data/gridsearch_nn/grid_nn'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
+
+
+# NN Transformed Input --------------------------------------------------------
+
+## Lee2018 Gridsearch ------------------------------------------------------
+
+filename1 <- 'data/gridsearch_nn_trans/grid_nn_trans_lee2018'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
+
+## Custom Gridsearch ------------------------------------------------------
+
+filename2 <- 'data/gridsearch_nn_trans/grid_nn_trans'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
+
+
+# Basis NN 4by4 ------------------------------------------------------------
+
+## Lee2018 Gridsearch ------------------------------------------------------
+
+filename1 <- 'data/gridsearch_basis/lee2018/grid_basis_4by4'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
+
+## Custom Gridsearch ------------------------------------------------------
+
+filename2 <- 'data/gridsearch_basis/grid_basis_4by4'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
+
+
+# Basis NN 4by4&20by20 ---------------------------------------------------
+
+## Lee2018 Gridsearch ------------------------------------------------------
+
 filename1 <- 'data/gridsearch_basis/lee2018/grid_basis_4by4_20by20'
 model <- read_csv(paste0(filename1, '.csv'))
 loss <- read_csv(paste0(filename1, '_val_mse.csv')) %>%
   mutate(rmse = sqrt(val_mse)) %>%
   inner_join(model, by = 'model_num')
 
-# Grid Search: General Trends ---------------------------------------------
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
 
-# Filter down to RMSE less than 5
-loss %>%
-  ggplot(aes(x = epoch, y = rmse, group = model_num)) +
-  geom_smooth(se = FALSE, alpha = 0.5) +
-  facet_grid(n_layers ~ layer_width) 
-  scale_y_continuous(limits = c(NA, 5))
+## Custom Gridsearch ------------------------------------------------------
 
-loss %>%
-  ggplot(aes(x = epoch, y = rmse, group = model_num)) +
-  geom_smooth(se = FALSE, alpha = 0.5, col = 'royalblue') +
-  facet_grid(epochs ~ decay_rate) +
-  scale_y_continuous(limits = c(NA, 5))
+# filename2 <- 'data/gridsearch_nn_trans/grid_nn_trans'
+# model <- read_csv(paste0(filename2, '.csv'))
+# loss <- read_csv(paste0(filename2, '_val_mse.csv')) %>%
+#   mutate(rmse = sqrt(val_mse)) %>%
+#   inner_join(model, by = 'model_num')
+# 
+# best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+# View(best5)
 
-
-# 5 Best Models: Lowest RMSE Anywhere -------------------------------------
-
-# Filter down to models with lowest loss at any epoch
-min_loss_modelnum <- loss %>%
-  group_by(model_num) %>%
-  summarize(min_rmse = min(rmse)) %>%
-  slice_min(min_rmse, n = 5) %>%
-  pull(model_num)
-loss_best <- loss %>%
-  filter(model_num %in% min_loss_modelnum)
-  
-loss_best %>%
-  ggplot(aes(x = epoch, y = rmse, 
-             group = model_num, 
-             col = as.factor(model_num))) +
-  geom_line(alpha = 0.3) +
-  geom_smooth(se = FALSE) +
-  labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
-  theme_bw()
-
-loss_best %>%
-  group_by(model_num) %>%
-  summarize(min_rmse = round(min(rmse), 2),
-            min_rmse_epoch = which.min(rmse)) %>%
-  inner_join(model, by = 'model_num') %>%
-  select(-c(min_rmse, min_rmse_epoch),
-         c(min_rmse, min_rmse_epoch)) %>%
-  View()
-
-
-# 5 Best Models: Lowest Ending RMSE -------------------------------------
-
-best_end_modelnum <- loss %>%
-  group_by(model_num) %>%
-  filter(epoch == max(epoch)) %>%
-  ungroup() %>%
-  slice_min(rmse, n = 5) %>%
-  pull(model_num)
-
-loss %>%
-  filter(model_num %in% best_end_modelnum) %>%
-  ggplot(aes(x = epoch, y = rmse, col = as.factor(model_num))) +
-  geom_line(alpha = 0.3) +
-  geom_smooth(se = FALSE) +
-  labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
-  theme_bw()
-
-model %>%
-  filter(model_num %in% best_end_modelnum) %>%
-  View()
