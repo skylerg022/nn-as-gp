@@ -104,12 +104,12 @@ View(best5)
 
 ## Custom Gridsearch ------------------------------------------------------
 
-# filename2 <- 'data/gridsearch_nn_trans/grid_nn_trans'
-# model <- read_csv(paste0(filename2, '.csv'))
-# loss <- read_csv(paste0(filename2, '_val_mse.csv')) %>%
-#   mutate(rmse = sqrt(val_mse)) %>%
-#   inner_join(model, by = 'model_num')
-# 
-# best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
-# View(best5)
+filename2 <- 'data/gridsearch_basis/grid_basis_4by4_20by20'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_mse.csv')) %>%
+  mutate(rmse = sqrt(val_mse)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
 
