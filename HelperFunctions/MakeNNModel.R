@@ -165,13 +165,14 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size, 
           validation_data = list(x_val, y_val))
-    beepr::beep()
+    
+    try({beepr::beep()}, silent = TRUE)
     model
   } else if (test == 'all_train') { # Fully train data
     model %>% 
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size)
-    beepr::beep()
+    try({beepr::beep()}, silent = TRUE)
     model
   } else {
     err_message <- paste0('Model fitting test not recognized. Please assign test ',
