@@ -19,12 +19,6 @@ if (rstudioapi::isAvailable()) {
 # Make directories if needed
 source('../HelperFunctions/Defaults.R')
 dirCheck()
-
-# Create and read in revised data
-source('eda.R')
-# Remove extra variables and re-source
-rm(list = ls())
-source('../HelperFunctions/Defaults.R')
 source('../HelperFunctions/MakeNNModel.R')
 source('../HelperFunctions/GridsearchPlots.R')
 
@@ -32,6 +26,7 @@ source('../HelperFunctions/GridsearchPlots.R')
 load('data/dataset2_split.RData')
 
 n_cores <- 30
-gridsearch('nn', n_cores = n_cores)
-gridsearch('nn_trans', n_cores = n_cores)
-
+gridsearch(input_type = 'nn', modeltype = 'custom', 
+           n_cores = n_cores, sqrt_n_knots = NULL)
+gridsearch(input_type = 'nn', modeltype = 'lee2018', 
+           n_cores = n_cores, sqrt_n_knots = NULL)
