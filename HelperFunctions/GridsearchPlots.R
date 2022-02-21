@@ -80,8 +80,17 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom', n_cores = 20, sq
   }
   
   # Write data to csv
-  write_csv(grid, paste0('data/grid_', input_type, '_', modeltype, '.csv'))
-  write_csv(val_df, paste0('data/grid_', input_type, '_', modeltype, '_val_mse.csv'))
+  if (input_type == 'basis') {
+    basis_knots <- sapply(sqrt_n_knots, function(x) { 
+      num <- as.character(x)
+      return(paste0(num, 'by', num))
+      }) %>% paste(collapse = '_') %>%
+      paste0('_')
+  } else {
+    basis_knots <- ''
+  }
+  write_csv(grid, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '.csv'))
+  write_csv(val_df, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '_val_mse.csv'))
   
   return()
 }
