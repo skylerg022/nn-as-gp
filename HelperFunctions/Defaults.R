@@ -35,10 +35,10 @@ multiResBases <- function(x_train, x_test, sqrt_n_knots,
     ((1-d)^6) * (35*d^2 + 18*d + 3) / 3
   }
   
-  xmin <- min(x_train$x)
-  xmax <- max(x_train$x)
-  ymin <- min(x_train$y)
-  ymax <- max(x_train$y)
+  xmin <- min(x_train[,'x'])
+  xmax <- max(x_train[,'x'])
+  ymin <- min(x_train[,'y'])
+  ymax <- max(x_train[,'y'])
   
   x_bases <- matrix(nrow = nrow(x_train), ncol = 0)
   x_bases_test <- matrix(nrow = nrow(x_test), ncol = 0)
