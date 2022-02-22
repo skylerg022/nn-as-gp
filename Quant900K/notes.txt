@@ -1,56 +1,43 @@
 
 Gridsearch Notes
+* Note: The best performing test RMSE's for this non-Gaussian dataset are about 0.0208 according to Figure S4 in
+  the supplementary material for the paper "Competition on Spatial Statistics for Large Datasets" by Huang et al.
+
 
 General
-- All Lee2018 gridsearches had a handful of NN setups that failed NN setup.
-  The learning rates of these NNs were much higher (e^(-4), 1/e) than those
-  NNs that fit (e^(-10), e^(-1)).
-- RMSE suffers more often for NNs with learning rate larger than e^(-3) or
-  weight decay larger than e^(-5). Performance is MUCH worse for both high
-  learning rate and weight decay.
-- Deep NNs (8 and 16 hidden layers) had convergence to two val RMSE's
 
-Lat-Long NN
-## Lee2018
-- 1 or 2 layers, any width between 64 and 2048 great performance
-- Lower batch sizes tend to have lower RMSE
-- Best val RMSE 1.19
-  - 16 layers 128 wide, low learning rate, batch size 16
-## Custom
-- Layer width of 64/128 better than 8, depth does not matter
-- Batch size of 64 generally has better RMSE
-- Best val RMSE 1.23
-  - 16 layers 128 wide, 100 epochs, batch size 256
 
-Lat-Long Transformed NN
+X,Y NN
 ## Lee2018
-- (SAME AS LAT-LONG NN)
-- Best val RMSE 1.24
-  - 2 layers 128 wide, batch size 128
+
 ## Custom
-- (SAME AS LAT-LONG NN)
-- Best val RMSE 1.24
-  - 16 layers 64 wide, 100 epochs, batch size 64
+- 4/8 hidden layers 256/512 wide had best performance
+- Batch sizes of 64/128 yielded smaller RMSE w/o increasing chances of getting extremely high RMSE
+- Deep, narrow (width <= 128) nets frequently converged to two different val RMSE's
+- Best val RMSE 0.15
+  - 8 layers 256 wide, early stop at 31 epochs, batch size 256
+
+X,Y Transformed NN
+## Lee2018
+
+## Custom
+- (layers & width SAME AS X,Y NN CUSTOM)
+- Batch size of 64/256 best
+- Best val RMSE 0.13
+  - 8 layers 256 wide, early stop at 35 epochs, batch size 256, has decay rate (0.1 / floor(n_train/batch_size))
 
 Basis 4by4 NN
-- Lower batch sizes tend to have lower RMSE
 ## Lee2018
-- 1 or 3 layers, any width between 128 and 2048 great performance
-- Best val RMSE 1.22
-  - 10 layers 256 wide, batch size 16
-## Custom
-- Layer widths bigger than 8 (128-1024) give better performance
-- Best RMSE 1.26
-  - 8 layers 128 wide, batch size 64, dropout rate 0.1
 
-Basis 20by20 NN
-## Lee2018
-- 1 or 3 layers, any width between 128 and 2048 great performance
-- Best val RMSE 1.22
-  - 3 layers 512 wide, batch size 64
 ## Custom
-- 1 layer limited in performance but not the worst
-- Lower batch size better
-- Best val RMSE 1.41
-  - 8 layers 128 wide, batch size 64, dropout 0.1
+
+
+Basis 4by4,20by20 NN
+## Lee2018
+
+## Custom
+- 1/2/4 layers, >= 256 width best performance
+- Batch size of 256 best
+- Best val RMSE 0.08
+  - 8 layers 256 wide, early stop at 41 epochs, batch size 256, has decay rate
 
