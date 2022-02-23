@@ -116,7 +116,7 @@ makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
   temp <- expand.grid(n_layers = n_layers,
                       layer_width = layer_width)
   grid <- do.call("rbind", 
-                  replicate(250, temp, simplify = FALSE))
+                  replicate(50, temp, simplify = FALSE))
   n_grid <- nrow(grid)
   grid <- grid %>%
     mutate(learning_rate = exp( runif(n_grid, log(10^(-4)), log(0.2)) ),
