@@ -29,25 +29,29 @@ fit_network <- function(type, model_pars, trainval_only = FALSE, pars_type = 'cu
     x_test <- cbind(x_test, x_test^2)
   } else if (type == 'basis') {
     if (trainval_only == TRUE) {
-      x_bases <- multiResBases(x_train = x_train,
-                               x_test = x_val,
-                               sqrt_n_knots = sqrt_n_knots,
-                               thresh_type = 'colsum',
-                               thresh = 30,
-                               thresh_max = 0.75)
-      x_train <- x_bases$x_train
-      x_val <- x_bases$x_test
-      rm(x_bases)
+      multiResBases(x_train = x_train,
+                    x_withheld = x_val,
+                    sqrt_n_knots = sqrt_n_knots,
+                    thresh_type = 'colsum',
+                    thresh = 30,
+                    thresh_max = 0.75,
+                    test = FALSE) %>%
+        list2env(envir = parent.frame())
+      # x_train <- x_bases$x_train
+      # x_val <- x_bases$x_test
+      # rm(x_bases)
     } else {
-      x_bases <- multiResBases(x_train = rbind(x_train, x_val),
-                               x_test = x_test,
-                               sqrt_n_knots = sqrt_n_knots,
-                               thresh_type = 'colsum',
-                               thresh = 30,
-                               thresh_max = 0.75)
-      x_train <- x_bases$x_train
-      x_test <- x_bases$x_test
-      rm(x_bases)
+      multiResBases(x_train = x_train,
+                    x_withheld = x_test,
+                    sqrt_n_knots = sqrt_n_knots,
+                    thresh_type = 'colsum',
+                    thresh = 30,
+                    thresh_max = 0.75,
+                    test = TRUE) %>%
+        list2env(envir = parent.frame())
+      # x_train <- x_bases$x_train
+      # x_test <- x_bases$x_test
+      # rm(x_bases)
     }
   } else {
     err_message <- paste0('Grid search not recognized. Please assign type ',
@@ -63,10 +67,12 @@ fit_network <- function(type, model_pars, trainval_only = FALSE, pars_type = 'cu
     if (type != 'basis') {
       n_train <- nrow(x_train)
       # Center and scale train and val using training data only
-      x_scaled <- predictorsScaled(x_train, x_val)
-      x_train <- x_scaled[1:n_train,]
-      x_val <- x_scaled[-c(1:n_train),]
-      rm(x_scaled)
+      predictorsScaled(x_train, x_val, test = FALSE) %>%
+        list2env(envir = parent.frame())
+      # x_scaled <- predictorsScaled(x_train, x_val)
+      # x_train <- x_scaled[1:n_train,]
+      # x_val <- x_scaled[-c(1:n_train),]
+      # rm(x_scaled)
     }
     
     model <- fitModel(model_pars, x_train, y_train, 
@@ -109,10 +115,13 @@ fit_network <- function(type, model_pars, trainval_only = FALSE, pars_type = 'cu
     
     if (type != 'basis') {
       n <- nrow(data_train)
-      x_scaled <- predictorsScaled(rbind(x_train, x_val), x_test, val_split = 0)
-      x_train <- x_scaled[1:n,]
-      x_test <- x_scaled[-c(1:n),]
-      rm(x_scaled)
+      predictorsScaled(rbind(x_train, x_val), x_test, test = TRUE) %>%
+        list2env(envir = parent.frame())
+      rm(x_val)
+      # x_scaled <- predictorsScaled(rbind(x_train, x_val), x_test, val_split = 0)
+      # x_train <- x_scaled[1:n,]
+      # x_test <- x_scaled[-c(1:n),]
+      # rm(x_scaled)
     }
     
     y_train <- rbind(y_train, y_val)

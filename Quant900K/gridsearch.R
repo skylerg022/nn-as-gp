@@ -20,7 +20,9 @@ if (rstudioapi::isAvailable()) {
 source('../HelperFunctions/Defaults.R')
 dirCheck()
 source('../HelperFunctions/NNFunctions.R')
+source('../HelperFunctions/Preprocess.R')
 source('../HelperFunctions/Gridsearch.R')
+
 
 # Read in data
 load('data/dataset2_split.RData')
