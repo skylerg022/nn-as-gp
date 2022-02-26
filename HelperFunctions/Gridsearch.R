@@ -46,14 +46,16 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
     x_train <- cbind(x_train, x_train^2)
     x_val <- cbind(x_val, x_val^2)
   } else if (input_type == 'basis') {
-    x_bases <- multiResBases(x_train = x_train,
-                             x_test = x_val,
-                             sqrt_n_knots = sqrt_n_knots,
-                             thresh_type = 'colsum',
-                             thresh = 30,
-                             thresh_max = 0.75)
-    x_train <- x_bases$x_train
-    x_val <- x_bases$x_test
+    multiResBases(x_train = x_train,
+                  x_withheld = x_val,
+                  sqrt_n_knots = sqrt_n_knots,
+                  thresh_type = 'colsum',
+                  thresh = 30,
+                  thresh_max = 0.75,
+                  test = FALSE) %>%
+      list2env(envir = parent.frame())
+    # x_train <- x_bases$x_train
+    # x_val <- x_bases$x_test
   } else {
     err_message <- paste0('Grid search not recognized. Please assign input_type ',
                           'as "nn" or "nn_trans".')
@@ -65,9 +67,11 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
   if (type != 'basis') {
     n_train <- nrow(x_train)
     # Center and scale train and val using training data only
-    x_scaled <- predictorsScaled(x_train, x_val)
-    x_train <- x_scaled[1:n_train,]
-    x_val <- x_scaled[-c(1:n_train),]
+    predictorsScaled(x_train, x_val, test = FALSE) %>%
+      list2env(envir = parent.frame())
+    # x_scaled <- predictorsScaled(x_train, x_val)
+    # x_train <- x_scaled[1:n_train,]
+    # x_val <- x_scaled[-c(1:n_train),]
   }
   
   if (modeltype == 'custom') {

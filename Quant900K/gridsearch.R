@@ -19,14 +19,16 @@ if (rstudioapi::isAvailable()) {
 # Make directories if needed
 source('../HelperFunctions/Defaults.R')
 dirCheck()
-source('../HelperFunctions/MakeNNModel.R')
-source('../HelperFunctions/GridsearchPlots.R')
+source('../HelperFunctions/NNFunctions.R')
+source('../HelperFunctions/Gridsearch.R')
 
 # Read in data
 load('data/dataset2_split.RData')
 
 n_cores <- 30
 gridsearch(input_type = 'nn', modeltype = 'custom', 
-           n_cores = n_cores, sqrt_n_knots = NULL)
+           n_cores = n_cores, sqrt_n_knots = NULL,
+           loss = loss_mean_squared_error())
 gridsearch(input_type = 'nn', modeltype = 'lee2018', 
-           n_cores = n_cores, sqrt_n_knots = NULL)
+           n_cores = n_cores, sqrt_n_knots = NULL,
+           loss = loss_mean_squared_error())

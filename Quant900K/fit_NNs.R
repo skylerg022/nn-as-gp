@@ -5,17 +5,19 @@ library(keras)
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
-source('../HelperFunctions/MakeNNModel.R')
+
+source('../HelperFunctions/Preprocess.R')
+source('../HelperFunctions/NNFunctions.R')
 source('../HelperFunctions/Defaults.R')
 
 # Read in data
-load('data/SimulatedTempsSplit.RData')
+load('data/dataset2_split.RData')
 
 fit_network <- function(type, model_pars, trainval_only = FALSE, pars_type = 'custom', sqrt_n_knots = NULL) {
   data_train <- rbind(cbind(x_train, y_train),
                       cbind(x_val, y_val))
-  data_test <- cbind(x_test, y_test)
-  
+  data_test <- x_test
+  # data_test <- cbind(x_test, y_test)
 
   # Data Transformations (if needed) -----------------------------------------
 
@@ -156,9 +158,9 @@ fit_network <- function(type, model_pars, trainval_only = FALSE, pars_type = 'cu
       labs(fill = 'Temp')
     
     # Evaluate test RMSE
-    yhat <- model %>%
+    yhat_test <- model %>%
       predict(x_test)
-    rmse_test <- sqrt(mean( (y_test - yhat)^2 )) %>%
+    rmse_test <- sqrt(mean( (y_test - yhat_test)^2 )) %>%
       round(2)
     
     # Evaluate train RMSE
