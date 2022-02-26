@@ -13,6 +13,7 @@ library(keras)
 #   - n_layers, layer_width, epochs, batch_size, decay_rate,
 #     dropout_rate, model_num
 # Output: Customized neural network model object
+## NOTE: Created model will work for continuous or binary response, but not categorical response.
 makeModel <- function(pars, input_length) {
   
   n_layers <- pars[[1]]
@@ -48,6 +49,7 @@ makeModel <- function(pars, input_length) {
 #   - n_layers, layer_width, learning_rate, weight_decay, epochs, 
 #     batch_size, sigma_w, sigma_b, model_num
 # Output: Customized neural network model object
+## NOTE: Created model will work for continuous or binary response, but not categorical response.
 makeModelLee2018 <- function(pars, input_length) {
   
   n_layers <- pars[[1]]
@@ -93,10 +95,10 @@ makeModelLee2018 <- function(pars, input_length) {
 # Input:
 # - pars: a numeric vector of varying length depending on the 'modeltype'
 #   parameter. See modeltype description below.
-#   length 7 giving model parameters in 
-#   the following order:
-#   - 
-# - x_train: training
+# - x_train: nxp matrix of training observation predictors
+# - y_train: nx1 matrix of response variable
+# - x_val: mxp matrix of validation-split observation predictors
+# - y_val: mx1 matrix of validation-split response variables
 # - modeltype: a string value of 'custom' or 'lee2018'. The type 'custom'
 #   will expect a pars vector of length 7 for the following values
 #   - n_layers, layer_width, epochs, batch_size, decay_rate,
@@ -114,8 +116,40 @@ makeModelLee2018 <- function(pars, input_length) {
 # - If test is 'grid', returns a list of model parameters and validation
 #   loss record across epochs
 fitModel <- function(pars, x_train, y_train, x_val = NULL, 
-                     y_val = NULL, modeltype = 'custom', test = 'part_train') {
+                     y_val = NULL, modeltype = 'custom', 
+                     loss = loss_mean_squared_error(), test = 'part_train') {
   
+  # Check for erroneous inputs
+  if ( !(modeltype %in% c('custom', 'lee2018')) ) {
+    err_message <- paste0('Model type not recognized. This determines how ',
+                          'parameter \'pars\' will be used and what neural network ',
+                          'framework will be used. Please use "custom" or ',
+                          '"lee2018" for parameter \'modeltype.\'')
+    stop(err_message)
+  }
+  if (class(pars) != 'numeric') {
+    err_message <- paste0('Input variable \'pars\' should be a numeric vector.')
+    stop(err_message)
+  }
+  modelpar_right <- ( (modeltype == 'custom' & length(pars) == 7) |
+                      (modeltype == 'lee2018' & length(pars) == 9) )
+  if (!modelpar_right) {
+    err_message <- paste0('Input \'pars\' vector is not of correct length ',
+                          'for specified \'modeltype\'.')
+    stop(err_message)
+  }
+  if (nrow(x_train) != nrow(y_train)) {
+    err_message <- paste0('\'x_train\' and \'y_train\' have a different number of rows.')
+    stop(err_message)
+  }
+  if ( !(test %in% c('grid', 'part_train', 'all_train')) ) {
+    err_message <- paste0('Model fitting test not recognized. Please assign test ',
+                          'as "grid", "part_train", or "all_train".')
+    stop(err_message)
+  }
+
+  
+  # Build model according to modeltype
   if (modeltype == 'custom') {
     learning_rate <- 0.001
     epochs <- pars[[3]]
@@ -124,30 +158,24 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
     model_num <- pars[[7]]
     makeModFun <- makeModel
   } else if (modeltype == 'lee2018') {
-    # n_layers <- pars[[1]]
     learning_rate <- pars[[3]]
     epochs <- pars[[5]]
     batch_size <- pars[[6]]
     decay_rate <- 0
     model_num <- pars[[9]]
     makeModFun <- makeModelLee2018
-  } else {
-    err_message <- paste0('Model type not recognized. This determines how ',
-                          'parameter \'pars\' will be used and what neural network ',
-                          'framework will be used. Please use "custom" or ',
-                          '"lee2018" for parameter \'modeltype.\'')
-    stop(err_message)
   }
   
   input_length <- ncol(x_train)
   
   model <- makeModFun(pars, input_length)
   model %>%
-    compile(loss = 'mse',
+    compile(loss = loss, #loss = 'mse'
             optimizer = optimizer_adam(learning_rate = learning_rate,
                                        decay = decay_rate))
   
   if(test == 'grid') { # Evaluate performance on val set; no print to console
+    t1 <- proc.time()
     history <- model %>% 
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size, 
@@ -157,76 +185,29 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
           callbacks = list(callback_early_stopping(monitor = 'val_loss',
                                                    patience = 5, 
                                                    restore_best_weights = TRUE)))
-    print(sprintf('Model %.0f Trained', model_num))
-    list(pars = pars,
-         val_loss = history$metrics$val_loss)
+    t2 <- proc.time()
+    t <- (t2 - t1)/60 # minutes
+    
+    print(sprintf('Model %.0f trained in %.1f minutes.', model_num, t[3]))
+    result <- list(pars = pars,
+                   val_loss = history$metrics$val_loss)
   } else if (test == 'part_train') { # Evaluate performance on val set
     history <- model %>% 
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size, 
           validation_data = list(x_val, y_val))
     
-    try({beepr::beep()}, silent = TRUE)
-    model
+    try({beepr::beep()}, silent = TRUE) # Don't throw error if package not installed
+    result <- model
   } else if (test == 'all_train') { # Fully train data
     model %>% 
       fit(x_train, y_train, 
           epochs = epochs, batch_size = batch_size)
-    try({beepr::beep()}, silent = TRUE)
-    model
-  } else {
-    err_message <- paste0('Model fitting test not recognized. Please assign test ',
-                          'as "grid", "part_train", or "all_train".')
-    stop(err_message)
-  }
-}
-
-
-
-# Other functions ---------------------------------------------------------
-
-# predictorStats
-# Center and scale all observations by columns. To scale the data
-#  using all observations, let x_test be NULL and set val_split to 0.
-#  When x_test is not null, val_split is ignored.
-# Inputs:
-# - x_train: An n x p matrix of n observations and p numeric predictors.
-# - x_test: An m x p matrix of m observations and p numeric predictors.
-#     These observations will never be used to calculate column means and
-#     standard deviations.
-# - val_split: the proportion of training data to exclude (last 100*val_split 
-#     percent of the observations) when calculating column means and standard
-#     devations.
-# Output:
-# - An (n+m) x p matrix of all observations, centered and scaled using
-#     just the training data.
-predictorsScaled <- function(x_train, x_test = NULL, val_split = 0.2) {
-  n <- nrow(x_train)
-  if (is.null(x_test)) {
-    n_train <- floor(nrow(x_train) * (1-val_split))
-  } else {
-    n_train <- n
-  }
-  mean_train <- x_train[1:n_train,] %>%
-    colMeans()
-  sd_train <- x_train[1:n_train,] %>%
-    apply(2, sd)
-  
-  # Function to help with matrix math
-  quickMatrix <- function(n, x) {
-    matrix(x, ncol = length(x), nrow = n, byrow = TRUE)
+    
+    try({beepr::beep()}, silent = TRUE) # Don't throw error if package not installed
+    result <- model
   }
   
-  # Scale predictors with appropriate statistics
-  x_train <- ( (x_train - quickMatrix(n, mean_train)) /
-                 quickMatrix(n, sd_train) ) %>%
-    as.matrix()
-  if (!is.null(x_test)) {
-    x_test <- ( (x_test - quickMatrix(nrow(x_test), mean_train)) /
-                  quickMatrix(nrow(x_test), sd_train) ) %>%
-      as.matrix()
-  }
-  
-  return(rbind(x_train, x_test))
+  return(result)
 }
 

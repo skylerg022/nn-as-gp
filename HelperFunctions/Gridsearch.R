@@ -5,8 +5,41 @@ library(keras)
 library(parallel)
 
 
+# Setup Functions ---------------------------------------------------------
+
+# Make Lee2018 Grid -------------------------------------------------------
+
+makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
+                            layer_width = c(2^7, 2^8, 2^9, 2^10, 2^11)) {
+  temp <- expand.grid(n_layers = n_layers,
+                      layer_width = layer_width)
+  grid <- do.call("rbind", 
+                  replicate(50, temp, simplify = FALSE))
+  n_grid <- nrow(grid)
+  
+  grid <- grid %>%
+    mutate(learning_rate = exp( runif(n_grid, log(10^(-4)), log(0.2)) ),
+           weight_decay = exp( runif(n_grid, log(10^(-8)), log(1)) ),
+           epochs = 30,
+           batch_size = sample(c(2^4, 2^5, 2^6, 2^7, 2^8),
+                               size = n_grid, replace = TRUE),
+           sigma_w = runif(n_grid, 0.01, 2.5),
+           sigma_b = runif(n_grid, 0, 1.5)) %>%
+    # filter out observations with more than 800,000 parameters
+    filter((layer_width^2)*(n_layers-1) <= 8e5) %>%
+    arrange( desc((layer_width^2)*(n_layers-1)) ) %>%
+    mutate(model_num = row_number())
+  
+  return(grid)
+}
+
+
 # gridsearch function for NN setups
-gridsearch <- function(input_type = 'nn', modeltype = 'custom', n_cores = 20, sqrt_n_knots = NULL) {
+gridsearch <- function(input_type = 'nn', modeltype = 'custom', 
+                       n_cores = 20, sqrt_n_knots = NULL,
+                       loss = loss_mean_squared_error()) {
+  
+  # Input preprocessing
   if (input_type == 'nn') {
     # x_train and x_val are ready for scaling
   } else if (input_type == 'nn_trans') {
@@ -27,13 +60,15 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom', n_cores = 20, sq
     stop(err_message)
   }
   
-  # Neural Network --------------------------------------------------------
+  # Neural Network
   
-  n_train <- nrow(x_train)
-  # Center and scale train and val using training data only
-  x_scaled <- predictorsScaled(x_train, x_val)
-  x_train <- x_scaled[1:n_train,]
-  x_val <- x_scaled[-c(1:n_train),]
+  if (type != 'basis') {
+    n_train <- nrow(x_train)
+    # Center and scale train and val using training data only
+    x_scaled <- predictorsScaled(x_train, x_val)
+    x_train <- x_scaled[1:n_train,]
+    x_val <- x_scaled[-c(1:n_train),]
+  }
   
   if (modeltype == 'custom') {
     grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16), 
@@ -63,19 +98,19 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom', n_cores = 20, sq
                         function(pars) fitModel(pars, x_train, y_train, 
                                                 x_val, y_val, 
                                                 modeltype = modeltype,
-                                                test = 'grid'),
+                                                test = 'grid', loss = loss),
                         mc.cores = n_cores, mc.silent = FALSE)
     # mc.cleanup = FALSE, mc.allow.recursive = FALSE)
   })
   
   # Convert results from list into dataframe
   val_df <- matrix(NA, nrow = 0, ncol = 3,
-                   dimnames = list(NULL, c('model_num', 'epoch', 'val_mse')))
+                   dimnames = list(NULL, c('model_num', 'epoch', 'val_loss')))
   for (i in 1:length(results)) {
     epochs <- length(results[[i]]$val_loss)
     new_rows <- data.frame(model_num = results[[i]]$pars[['model_num']],
                            epoch = 1:epochs,
-                           val_mse = results[[i]]$val_loss)
+                           val_loss = results[[i]]$val_loss)
     val_df <- rbind(val_df, new_rows)
   }
   
@@ -90,12 +125,14 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom', n_cores = 20, sq
     basis_knots <- ''
   }
   write_csv(grid, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '.csv'))
-  write_csv(val_df, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '_val_mse.csv'))
+  write_csv(val_df, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '_val_loss.csv'))
   
   return()
 }
 
 
+
+# Post-search EDA Functions ------------------------------------------------
 
 # Create a raster for all combinations of xvar and yvar hyperparameters
 customRaster <- function(data, xvar, yvar, fillvar,
@@ -129,18 +166,18 @@ gridsearchEDAandClean <- function(model, loss, lee2018 = FALSE) {
   if (lee2018 == TRUE) {
     # Investigate and remove NNs that failed fitting
     # Compare learning rate density between NN setups that trained
-    #  and those that ever had rmse of NA
+    #  and those that ever had loss of NA
     had_na <- loss %>%
       group_by(model_num) %>%
-      filter(any(is.na(rmse))) %>% 
+      filter(any(is.na(loss))) %>% 
       pull(model_num) %>% unique()
     par(mfrow = c(1, 2))
-    ## No missing RMSE models
+    ## No missing loss models
     model %>%
       filter(!(model_num %in% had_na)) %>%
       pull(learning_rate) %>%
       log() %>% density() %>% plot(main = '')
-    ## Missing RMSE models
+    ## Missing loss models
     model %>%
       filter(model_num %in% had_na) %>%
       pull(learning_rate) %>%
@@ -159,127 +196,110 @@ gridsearchEDAandClean <- function(model, loss, lee2018 = FALSE) {
   
   min_loss <- loss %>%
     group_by(model_num) %>%
-    summarize(min_rmse = min(rmse)) %>%
+    summarize(min_loss = min(loss)) %>%
     inner_join(model, by = 'model_num')
   
-  # Compare average best RMSE for each group (layer_width, n_layers) of NNs
+  # Compare average best loss for each group (layer_width, n_layers) of NNs
   avg_loss <- min_loss %>%
     group_by(layer_width, n_layers) %>%
-    summarize(min_rmse = mean(min_rmse))
+    summarize(min_loss = mean(min_loss))
   customRaster(avg_loss, xvar = 'layer_width', yvar = 'n_layers', 
-               fillvar = 'min_rmse', xlab = 'Layer Width', 
-               ylab = 'Hidden Layers', fill_lab = 'RMSE') %>%
+               fillvar = 'min_loss', xlab = 'Layer Width', 
+               ylab = 'Hidden Layers', fill_lab = 'LOSS') %>%
     print()
-  readline(prompt = paste0('Log average of best validation RMSE for ',
+  readline(prompt = paste0('Log average of best validation LOSS for ',
                            'each trained NN, grouped by (Layer Width, # ',
                            'of Hidden Layers).\n',
                            'Press [Enter] to continue:'))
-  # Does batch size affect the RMSE performance?
+  # Does batch size affect the LOSS performance?
   p <- min_loss %>%
-    ggplot(aes(as.factor(batch_size), log(min_rmse))) + 
+    ggplot(aes(as.factor(batch_size), log(min_loss))) + 
     geom_violin() + 
-    labs(x = 'Batch Size', y = 'log(Best RMSE)') +
+    labs(x = 'Batch Size', y = 'log(Best LOSS)') +
     coord_flip()
   print(p)
-  readline(prompt = paste0('Log average of best validation RMSE for ',
+  readline(prompt = paste0('Log average of best validation LOSS for ',
                            'each trained NN, grouped by (Batch Size, ',
                            'Layer Width).\n',
                            'Press [Enter] to continue:'))
   
   if (lee2018 == TRUE) {
-    # # Does weight decay make a difference in minimum val RMSE?
+    # # Does weight decay make a difference in minimum val LOSS?
     # min_loss %>%
-    #   ggplot(aes(weight_decay, log(min_rmse))) +
+    #   ggplot(aes(weight_decay, log(min_loss))) +
     #   geom_point() +
-    #   labs(x = 'Weight Decay', y = 'Log(Best RMSE)')
+    #   labs(x = 'Weight Decay', y = 'Log(Best LOSS)')
     # 
     # # How about learning rate?
     # min_loss %>%
-    #   ggplot(aes(learning_rate, log(min_rmse))) +
+    #   ggplot(aes(learning_rate, log(min_loss))) +
     #   geom_point(alpha = 0.7) +
-    #   labs(x = 'Learning Rate', y = 'log(Best RMSE)')
+    #   labs(x = 'Learning Rate', y = 'log(Best LOSS)')
     
-    # Interesting effect on RMSE for (learning rate, weight decay) combos
+    # Interesting effect on LOSS for (learning rate, weight decay) combos
     # Not visible in raster plot
     # min_loss %>%
     #   mutate(log_learning_rate = round(log(learning_rate)),
     #          log_weight_decay = round(log(weight_decay)/2)) %>%
     #   customRaster(xvar = 'log_learning_rate', yvar = 'log_weight_decay', 
-    #                fillvar = 'min_rmse', xlab = 'log(Learning Rate)', 
-    #                ylab = 'log(Weight Decay)', fill_lab = 'RMSE')
+    #                fillvar = 'min_loss', xlab = 'log(Learning Rate)', 
+    #                ylab = 'log(Weight Decay)', fill_lab = 'LOSS')
     p <- min_loss %>%
-      ggplot(aes(log(learning_rate), log(weight_decay), col = log(min_rmse))) +
+      ggplot(aes(log(learning_rate), log(weight_decay), col = log(min_loss))) +
       geom_point(alpha = 0.9, size = 2) +
       scale_color_continuous(type = 'viridis') +
       labs(x = 'log(Learning Rate)', y = 'log(Weight Decay)', 
-           col = 'log(Best RMSE)')
+           col = 'log(Best LOSS)')
     print(p)
-    readline(prompt = paste0('Log RMSE for each trained NN across ',
+    readline(prompt = paste0('Log LOSS for each trained NN across ',
                              'varying learning rate and weight decay settings.\n',
                              'Press [Enter] to continue:'))
   }
   
-  # Filter down to RMSE less than 5
+  # Filter down to LOSS less than 5
   p <- loss %>%
-    ggplot(aes(x = epoch, y = rmse, group = model_num)) +
+    ggplot(aes(x = epoch, y = loss, group = model_num)) +
     geom_line(alpha = 0.5) +
     facet_grid(n_layers ~ layer_width) +
     scale_y_continuous(limits = c(NA, 5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(x = 'Epoch')
   print(p)
-  readline(prompt = paste0('RMSE for all trained NN.\n',
+  readline(prompt = paste0('LOSS for all trained NN.\n',
                            'Press [Enter] to continue:'))
   
-  ### 5 Best Models: Lowest RMSE Anywhere -------------------------------------
+  ### 5 Best Models: Lowest LOSS Anywhere -------------------------------------
   
   # Filter down to models with lowest loss at any epoch
   min_loss_modelnum <- min_loss %>%
     # group_by(model_num) %>%
-    # summarize(min_rmse = min(rmse)) %>%
-    slice_min(min_rmse, n = 5) %>%
+    # summarize(min_loss = min(loss)) %>%
+    slice_min(min_loss, n = 5) %>%
     pull(model_num)
   loss_best <- loss %>%
     filter(model_num %in% min_loss_modelnum)
   
   p <- loss_best %>%
-    ggplot(aes(x = epoch, y = rmse, 
+    ggplot(aes(x = epoch, y = loss, 
                group = model_num, 
                col = as.factor(model_num))) +
     geom_line(alpha = 0.3) +
     geom_smooth(se = FALSE) +
-    labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
+    labs(col = 'Model', x = 'Epoch', y = 'LOSS') +
     theme_bw() +
     scale_y_continuous(limits = c(NA, 2.75))
   print(p)
-  readline(prompt = paste0('Validation RMSE for 5 NN with lowest RMSE.\n',
+  readline(prompt = paste0('Validation LOSS for 5 NN with lowest LOSS.\n',
                            'Press [Enter] to continue:'))
   
   best5 <- loss_best %>%
     group_by(model_num) %>%
-    summarize(min_rmse = round(min(rmse), 2),
-              min_rmse_epoch = which.min(rmse)) %>%
+    summarize(min_loss = round(min(loss), 2),
+              min_loss_epoch = which.min(loss)) %>%
     inner_join(model, by = 'model_num') %>%
-    select(-c(min_rmse, min_rmse_epoch),
-           c(min_rmse, min_rmse_epoch))
+    select(-c(min_loss, min_loss_epoch),
+           c(min_loss, min_loss_epoch))
   
   return(best5)
   
-  # 5 Best Models: Lowest Ending RMSE -------------------------------------
-  # best_end_modelnum <- loss %>%
-  #   group_by(model_num) %>%
-  #   filter(epoch == max(epoch)) %>%
-  #   ungroup() %>%
-  #   slice_min(rmse, n = 5) %>%
-  #   pull(model_num)
-  # loss %>%
-  #   filter(model_num %in% best_end_modelnum) %>%
-  #   ggplot(aes(x = epoch, y = rmse, col = as.factor(model_num))) +
-  #   geom_line(alpha = 0.3) +
-  #   geom_smooth(se = FALSE) +
-  #   labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
-  #   theme_bw()
-  # model %>%
-  #   filter(model_num %in% best_end_modelnum) %>%
-  #   View()
 }
