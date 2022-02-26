@@ -127,10 +127,10 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
                           '"lee2018" for parameter \'modeltype.\'')
     stop(err_message)
   }
-  if (class(pars) != 'numeric') {
-    err_message <- paste0('Input variable \'pars\' should be a numeric vector.')
-    stop(err_message)
-  }
+  # if (class(pars) != 'numeric') {
+  #   err_message <- paste0('Input variable \'pars\' should be a numeric vector.')
+  #   stop(err_message)
+  # }
   modelpar_right <- ( (modeltype == 'custom' & length(pars) == 7) |
                       (modeltype == 'lee2018' & length(pars) == 9) )
   if (!modelpar_right) {

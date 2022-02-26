@@ -64,7 +64,7 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
   
   # Neural Network
   
-  if (type != 'basis') {
+  if (input_type != 'basis') {
     n_train <- nrow(x_train)
     # Center and scale train and val using training data only
     predictorsScaled(x_train, x_val, test = FALSE) %>%
