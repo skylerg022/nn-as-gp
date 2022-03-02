@@ -9,6 +9,10 @@ General
 
 X,Y NN
 ## Lee2018
+- No more than 4 layers. The deeper, the shallower it should be.
+- Batch size of 64/128 better
+- Best val RMSE 0.18
+  - 8 layers 256 wide, early stop at 28 epochs, batch size 32, small learning rate and weight decay
 
 ## Custom
 - 4/8 hidden layers 256/512 wide had best performance
@@ -19,6 +23,10 @@ X,Y NN
 
 X,Y Transformed NN
 ## Lee2018
+- 1/2 layers, >= 512 width best performance
+- Batch size 128/256 best
+- Best val RMSE 0.18
+  - 4 layers 512 wide, only trained 30 epochs, batch size 256
 
 ## Custom
 - (layers & width SAME AS X,Y NN CUSTOM)
@@ -30,10 +38,16 @@ Basis 4by4 NN
 ## Lee2018
 
 ## Custom
-
+- 2/4 layers >= 256 width best performance
+- Batch size of 256 best
+- Best val RMSE 0.11
+  - 4 layers 512 wide, early stop at 42 epochs, batch size 128, has decay rate
 
 Basis 4by4,20by20 NN
 ## Lee2018
+- 1 layer, 1024 best
+- Batch size of 256 best
+- Bes val RMSE 
 
 ## Custom
 - 1/2/4 layers, >= 256 width best performance

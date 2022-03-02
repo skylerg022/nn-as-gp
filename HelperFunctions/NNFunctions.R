@@ -211,3 +211,231 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
   return(result)
 }
 
+
+
+
+evalNetwork <- function(x_train, y_train, x_val, y_val,
+                        model_pars, x_test = NULL, y_test = NULL,
+                        type = 'nn', pars_type = 'custom', 
+                        sqrt_n_knots = NULL, plot = FALSE) {
+  myenv <- environment()
+  have_test_x <- !is.null(x_test)
+  have_test_y <- !is.null(y_test)
+  
+  # Pre-transformed data for visualizations
+  data_train <- rbind(cbind(x_train, y_train),
+                      cbind(x_val, y_val))
+  if (have_test_x) {
+    if (have_test_y) {
+      data_test <- cbind(x_test, y_test)
+    } else {
+      data_test <- x_test
+    }
+  }
+  
+  # Data Transformations (if needed) -----------------------------------------
+  
+  if (type == 'nn') {
+    # x_train and x_val are ready for scaling
+  } else if (type == 'nn_trans') {
+    x_train <- cbind(x_train, x_train^2)
+    x_val <- cbind(x_val, x_val^2)
+    if (have_test_x == TRUE) {
+      x_test <- cbind(x_test, x_test^2)
+    }
+  } else if (type == 'basis') {
+    if (have_test_x == TRUE) {
+      multiResBases(x_train = x_train,
+                    x_withheld = x_test,
+                    sqrt_n_knots = sqrt_n_knots,
+                    thresh_type = 'colsum',
+                    thresh = 30,
+                    thresh_max = 0.75,
+                    test = TRUE) %>%
+        list2env(envir = myenv)
+      # x_train <- x_bases$x_train
+      # x_test <- x_bases$x_test
+      # rm(x_bases)
+    } else {
+      multiResBases(x_train = x_train,
+                    x_withheld = x_val,
+                    sqrt_n_knots = sqrt_n_knots,
+                    thresh_type = 'colsum',
+                    thresh = 30,
+                    thresh_max = 0.75,
+                    test = FALSE) %>%
+        list2env(envir = myenv)
+      # x_train <- x_bases$x_train
+      # x_val <- x_bases$x_test
+      # rm(x_bases)
+    }
+  } else {
+    err_message <- paste0('Grid search not recognized. Please assign type ',
+                          'as "nn" or "nn_trans".')
+    stop(err_message)
+  }
+  
+  # Neural Network --------------------------------------------------------
+  
+  if( have_test_x == FALSE) {
+    # # Train on only training data and validate
+    # 
+    # if (type != 'basis') {
+    #   n_train <- nrow(x_train)
+    #   # Center and scale train and val using training data only
+    #   predictorsScaled(x_train, x_val, test = FALSE) %>%
+    #     list2env(envir = myenv)
+    #   # x_scaled <- predictorsScaled(x_train, x_val)
+    #   # x_train <- x_scaled[1:n_train,]
+    #   # x_val <- x_scaled[-c(1:n_train),]
+    #   # rm(x_scaled)
+    # }
+    # 
+    # model <- fitModel(model_pars, x_train, y_train, 
+    #                   x_val, y_val, test = 'part_train',
+    #                   modeltype = pars_type)
+    # 
+    # # Predictions after fitting 80% of training set
+    # Predicted <- model %>%
+    #   predict(rbind(x_train, x_val))
+    # 
+    # data_pred <- cbind(data_train, Predicted) %>%
+    #   # clip predictions to max/min of observed data
+    #   # mutate(Predicted = ifelse(Predicted > max(TrueTemp), max(TrueTemp), Predicted),
+    #   #        Predicted = ifelse(Predicted < min(TrueTemp), min(TrueTemp), Predicted)) %>%
+    #   pivot_longer(cols = c(TrueTemp, Predicted),
+    #                names_to = 'type',
+    #                values_to = 'z')
+    # 
+    # simple_train <- data_pred %>%
+    #   mutate(across(c(x,y), round, digits = 2)) %>%
+    #   group_by(x, y, type) %>%
+    #   summarize(Temp = mean(z))
+    # 
+    # p <- simple_train %>%
+    #   ggplot(aes(x, y, fill = Temp)) +
+    #   geom_raster() +
+    #   facet_wrap(~type) +
+    #   scale_fill_continuous(type = 'viridis') +
+    #   theme_minimal()
+    # 
+    # print(p)
+    # 
+    # val_rmse <- sqrt(mean( (y_val - Predicted[-c(1:n_train),])^2 ))
+    # 
+    # results <- list(model = model,
+    #                 val_loss = val_rmse)
+    cat('Training and visualizations only on val performance not updated. Update needed here.')
+    results <- list(model = NULL,
+                    val_loss = NULL)
+  } else {
+    
+    # Test Predictions --------------------------------------------------------
+    
+    if (type != 'basis') {
+      n <- nrow(data_train)
+      predictorsScaled(rbind(x_train, x_val), x_test, test = TRUE) %>%
+        list2env(envir = myenv)
+      rm(x_val)
+      # x_scaled <- predictorsScaled(rbind(x_train, x_val), x_test, val_split = 0)
+      # x_train <- x_scaled[1:n,]
+      # x_test <- x_scaled[-c(1:n),]
+      # rm(x_scaled)
+    }
+    
+    y_train <- rbind(y_train, y_val)
+    
+    model <- fitModel(model_pars, x_train, y_train, 
+                      test = 'all_train',
+                      modeltype = pars_type)
+    
+    if (have_test_y == TRUE) {
+      # Predictions (including test set) after fitting 100% of training set
+      Predicted <- model %>%
+        predict(rbind(x_train, x_test))
+      
+      data_pred <- cbind(rbind(data_train, 
+                               data_test), 
+                         Predicted) %>%
+        pivot_longer(cols = c(TrueTemp, Predicted),
+                     names_to = 'type',
+                     values_to = 'z')
+      
+      simple_train <- data_pred %>%
+        mutate(across(c(x,y), round, digits = 2)) %>%
+        group_by(x, y, type) %>%
+        summarize(z = mean(z))
+      
+      # Just test performance
+      p_test <- simple_train %>%
+        ggplot(aes(x, y, fill = z)) +
+        geom_raster() +
+        geom_raster(data = data_train,
+                    mapping = aes(x, y, fill = min(simple_train$z))) +
+        facet_wrap(~type) +
+        scale_fill_continuous(type = 'viridis') +
+        theme_minimal() +
+        labs(fill = 'Temp')
+      
+      # All data prediction
+      p_all <- simple_train %>%
+        ggplot(aes(x, y, fill = z)) +
+        geom_raster() +
+        facet_wrap(~type) +
+        scale_fill_continuous(type = 'viridis') +
+        theme_minimal() +
+        labs(fill = 'Temp')
+      
+      # Evaluate test RMSE
+      yhat_test <- model %>%
+        predict(x_test)
+      rmse_test <- sqrt(mean( (y_test - yhat_test)^2 )) %>%
+        round(2)
+      
+      # Evaluate train RMSE
+      yhat <- model %>%
+        predict(x_train)
+      rmse_train <- sqrt(mean( (y_train - yhat)^2 )) %>%
+        round(2)
+      
+      
+      # Save ggplots
+      cat('Saving prediction plots in ', getwd(), '/pics/\n', sep = '')
+      filename <- paste0('pics/', type, '_', paste(sqrt_n_knots, collapse = '_'),
+                         '_', pars_type, '_rmsetrain', rmse_train,
+                         '_test', rmse_test, '_showtest.png') %>%
+        str_replace_all('(?<=[0-9])\\.(?=[0-9])', '_')
+      ggsave(filename,
+             plot = p_test,
+             width = pic_width,
+             height = pic_height,
+             units = pic_units,
+             bg = 'white')
+      
+      filename <- paste0('pics/', type, '_', paste(sqrt_n_knots, collapse = '_'),
+                         '_', pars_type, '_rmsetrain', rmse_train,
+                         '_test', rmse_test, '_showall.png') %>%
+        str_replace_all('(?<=[0-9])\\.(?=[0-9])', '_')
+      ggsave(filename,
+             plot = p_all,
+             width = pic_width,
+             height = pic_height,
+             units = pic_units,
+             bg = 'white')
+    }
+    
+    yhat_test <- model %>%
+      predict(x_test)
+    
+    results <- list(model = model,
+                    val_loss = NULL,
+                    yhat_test = yhat_test)
+  # } else {
+  #   yhat_test <- model %>%
+  #     predict(x_test)
+  #   results <- list(model = model,
+  #                   val_loss = NULL,
+  #                   yhat_test = yhat_test)
+  }
+  return(results)
+}
