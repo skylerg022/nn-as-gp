@@ -38,6 +38,7 @@ makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
 gridsearch <- function(input_type = 'nn', modeltype = 'custom', 
                        n_cores = 20, sqrt_n_knots = NULL,
                        loss = loss_mean_squared_error()) {
+  myenv <- environment()
   
   # Input preprocessing
   if (input_type == 'nn') {
@@ -53,7 +54,7 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
                   thresh = 30,
                   thresh_max = 0.75,
                   test = FALSE) %>%
-      list2env(envir = parent.frame())
+      list2env(envir = myenv)
     # x_train <- x_bases$x_train
     # x_val <- x_bases$x_test
   } else {
@@ -69,7 +70,7 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
   if (input_type != 'basis') {
     # Center and scale train and val using training data only
     predictorsScaled(x_train, x_val, test = FALSE) %>%
-      list2env(envir = parent.frame())
+      list2env(envir = myenv)
     # x_scaled <- predictorsScaled(x_train, x_val)
     # x_train <- x_scaled[1:n_train,]
     # x_val <- x_scaled[-c(1:n_train),]
