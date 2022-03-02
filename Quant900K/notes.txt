@@ -36,6 +36,10 @@ X,Y Transformed NN
 
 Basis 4by4 NN
 ## Lee2018
+- 1 layer, 1024 best
+- Batch size of 256 best
+- Bes val RMSE 0.14
+  - 8 layers 256 wide, best epoch at 29, batch size 256
 
 ## Custom
 - 2/4 layers >= 256 width best performance
@@ -45,9 +49,6 @@ Basis 4by4 NN
 
 Basis 4by4,20by20 NN
 ## Lee2018
-- 1 layer, 1024 best
-- Batch size of 256 best
-- Bes val RMSE 
 
 ## Custom
 - 1/2/4 layers, >= 256 width best performance

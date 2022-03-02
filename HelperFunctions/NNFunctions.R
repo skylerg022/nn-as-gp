@@ -245,7 +245,7 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
     }
   } else if (type == 'basis') {
     if (have_test_x == TRUE) {
-      multiResBases(x_train = x_train,
+      multiResBases(x_train = rbind(x_train, x_val),
                     x_withheld = x_test,
                     sqrt_n_knots = sqrt_n_knots,
                     thresh_type = 'colsum',
