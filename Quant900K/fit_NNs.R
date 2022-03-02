@@ -40,7 +40,7 @@ pred[,'latlong_nn_lee'] <-
   evalNetwork(x_train, y_train, x_val, y_val,
               model_pars = model_pars_lee, 
               x_test = x_test, y_test = NULL,
-              type = 'nn', pars_type = 'lee',
+              type = 'nn', pars_type = 'lee2018',
               sqrt_n_knots = NULL,
               plot = FALSE)$yhat_test
 ## Custom
@@ -69,7 +69,7 @@ pred[,'latlong_trans_lee'] <-
   evalNetwork(x_train, y_train, x_val, y_val,
               model_pars = model_pars_lee, 
               x_test = x_test, y_test = NULL,
-              type = 'nn_trans', pars_type = 'lee',
+              type = 'nn_trans', pars_type = 'lee2018',
               sqrt_n_knots = NULL,
               plot = FALSE)$yhat_test
 ## Custom
@@ -99,7 +99,7 @@ pred[,'basis_4by4_lee'] <-
   evalNetwork(x_train, y_train, x_val, y_val,
               model_pars = model_pars_lee, 
               x_test = x_test, y_test = NULL,
-              type = 'basis', pars_type = 'lee',
+              type = 'basis', pars_type = 'lee2018',
               sqrt_n_knots = c(4),
               plot = FALSE)$yhat_test
 ## Custom
@@ -129,7 +129,7 @@ model_pars <- c(n_layers = 8, layer_width = 2^7,
 #   evalNetwork(x_train, y_train, x_val, y_val,
 #               model_pars = model_pars_lee, 
 #               x_test = x_test, y_test = NULL,
-#               type = 'basis', pars_type = 'lee',
+#               type = 'basis', pars_type = 'lee2018',
 #               sqrt_n_knots = c(4, 20),
 #               plot = FALSE)$yhat_test
 ## Custom
