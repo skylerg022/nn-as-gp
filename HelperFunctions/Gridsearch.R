@@ -7,8 +7,6 @@ library(parallel)
 
 # Setup Functions ---------------------------------------------------------
 
-# Make Lee2018 Grid -------------------------------------------------------
-
 makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
                             layer_width = c(2^7, 2^8, 2^9, 2^10, 2^11)) {
   temp <- expand.grid(n_layers = n_layers,

@@ -113,25 +113,25 @@ pred[,'basis_4by4_custom'] <-
 
 
 # Basis 4by4&20by20
-# model_pars_lee <- c(n_layers = 1, layer_width = 2^7, 
-#                     learning_rate = 0.0029829550,
-#                     weight_decay = 3.655114e-05, 
-#                     epochs = 35, batch_size = 2^5, 
-#                     sigma_w = 0.8050873, sigma_b = 1.2809608, 
-#                     model_num = 2983)
+model_pars_lee <- c(n_layers = 4, layer_width = 2^9,
+                    learning_rate = 0.0006105797,
+                    weight_decay = 4.368532e-08,
+                    epochs = 35, batch_size = 2^7,
+                    sigma_w = 0.1983667, sigma_b = 0.11823064,
+                    model_num = 1)
 model_pars <- c(n_layers = 8, layer_width = 2^7,
                 epochs = 20, batch_size = 2^6,
                 decay_rate = 0.1 / (n_train %/% 2^6), dropout_rate = 0.1,
                 model_num = 70)
 
 ## Lee2018
-# pred[,'basis_4by4_20by20_lee'] <- 
-#   evalNetwork(x_train, y_train, x_val, y_val,
-#               model_pars = model_pars_lee, 
-#               x_test = x_test, y_test = NULL,
-#               type = 'basis', pars_type = 'lee2018',
-#               sqrt_n_knots = c(4, 20),
-#               plot = FALSE)$yhat_test
+pred[,'basis_4by4_20by20_lee'] <-
+  evalNetwork(x_train, y_train, x_val, y_val,
+              model_pars = model_pars_lee,
+              x_test = x_test, y_test = NULL,
+              type = 'basis', pars_type = 'lee2018',
+              sqrt_n_knots = c(4, 20),
+              plot = FALSE)$yhat_test
 ## Custom
 pred[,'basis_4by4_20by20_custom'] <- 
   evalNetwork(x_train, y_train, x_val, y_val,

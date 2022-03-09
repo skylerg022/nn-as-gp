@@ -20,20 +20,14 @@ data_test <- read.csv('data/dataset2_testing.csv')
 
 # How is the spatial data distributed?
 data_train %>%
-  ggplot(aes(x)) +
-  geom_histogram()
-data_train %>%
-  ggplot(aes(y)) +
-  geom_histogram()
+  ggplot(aes(x, y)) +
+  geom_bin_2d()
 # The data is approximately distributed uniformly across x and y.
 
 # How about for test data?
 data_test %>%
-  ggplot(aes(x)) +
-  geom_histogram()
-data_test %>%
-  ggplot(aes(y)) +
-  geom_histogram()
+  ggplot(aes(x, y)) +
+  geom_bin_2d()
 # Approximately uniform across both axes as well
 
 # Are there multiple observations in one location?

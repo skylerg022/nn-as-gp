@@ -49,6 +49,10 @@ Basis 4by4 NN
 
 Basis 4by4,20by20 NN
 ## Lee2018
+- 1/2 layers of any width best
+- Batch size of 128/256 best
+- Best val RMSE 0.09
+  - 4 layers 512 wide, best epoch at 28, batch size 128
 
 ## Custom
 - 1/2/4 layers, >= 256 width best performance

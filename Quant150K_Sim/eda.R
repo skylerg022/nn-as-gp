@@ -77,10 +77,11 @@ data_train2 %>%
          training = 1 - validation) %>%
   group_by(x, y) %>%
   summarize(training = max(training)) %>%
-  mutate(Dataset = ifelse(training == 1, 'Training', 'Validation')) %>%
+  mutate(Dataset = ifelse(training == 1, 'Train', 'Val')) %>%
   ggplot(aes(x, y, fill = Dataset)) +
   geom_raster() +
-  scale_fill_brewer(type = 'qual', palette = 6)
+  scale_fill_brewer(type = 'qual', palette = 6) +
+  theme_minimal()
 
 mean(data_train2$validation)
          
