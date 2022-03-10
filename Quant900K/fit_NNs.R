@@ -120,9 +120,9 @@ model_pars_lee <- c(n_layers = 4, layer_width = 2^9,
                     sigma_w = 0.1983667, sigma_b = 0.11823064,
                     model_num = 1)
 model_pars <- c(n_layers = 8, layer_width = 2^7,
-                epochs = 20, batch_size = 2^6,
-                decay_rate = 0.1 / (n_train %/% 2^6), dropout_rate = 0.1,
-                model_num = 70)
+                epochs = 60, batch_size = 2^5,
+                decay_rate = 0.1 / (n_train %/% 2^7), dropout_rate = 0,
+                model_num = 158)
 
 ## Lee2018
 pred[,'basis_4by4_20by20_lee'] <-
