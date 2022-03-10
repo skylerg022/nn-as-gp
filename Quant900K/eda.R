@@ -9,6 +9,8 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
+source('../HelperFunctions/Defaults.R')
+
 # Set seed
 set.seed(22122)
 
@@ -52,11 +54,17 @@ ndistinct / ( nrow(data_train) + nrow(data_test) )
 data_train %>%
   mutate(across(c(x,y), round, digits = 2)) %>%
   group_by(x, y) %>%
-  summarize(values = mean(values)) %>%
-  ggplot(aes(x, y, fill = values)) +
+  summarize(Value = mean(values)) %>%
+  ggplot(aes(x, y, fill = Value)) +
   geom_raster() +
   scale_fill_continuous(type = 'viridis') +
   theme_minimal()
+
+ggsave('pics/train.png',
+       width = pic_width * (2/3),
+       height = pic_height,
+       units = pic_units,
+       bg = 'white')
 
 # Where is test set located?
 data_test %>%
