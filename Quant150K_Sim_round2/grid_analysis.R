@@ -18,7 +18,7 @@ theme_set(theme_bw())
 
 ## Lee2018 Gridsearch ------------------------------------------------------
 
-filename1 <- 'data/dataset2/grid_nn_lee2018'
+filename1 <- 'data/grid_nn_lee2018'
 model <- read_csv(paste0(filename1, '.csv'))
 loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -29,7 +29,7 @@ View(best5)
 
 ## Custom Gridsearch ------------------------------------------------------
 
-filename2 <- 'data/dataset2/grid_nn_custom'
+filename2 <- 'data/grid_nn_custom'
 model <- read_csv(paste0(filename2, '.csv'))
 loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -43,7 +43,7 @@ View(best5)
 
 ## Lee2018 Gridsearch ------------------------------------------------------
 
-filename1 <- 'data/dataset2/grid_nn_trans_lee2018'
+filename1 <- 'data/grid_nn_trans_lee2018'
 model <- read_csv(paste0(filename1, '.csv'))
 loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -54,7 +54,7 @@ View(best5)
 
 ## Custom Gridsearch ------------------------------------------------------
 
-filename2 <- 'data/dataset2/grid_nn_trans_custom'
+filename2 <- 'data/grid_nn_trans_custom'
 model <- read_csv(paste0(filename2, '.csv'))
 loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -68,7 +68,7 @@ View(best5)
 
 ## Lee2018 Gridsearch ------------------------------------------------------
 
-filename1 <- 'data/dataset2/grid_basis_4by4_lee2018'
+filename1 <- 'data/grid_basis_4by4_lee2018'
 model <- read_csv(paste0(filename1, '.csv'))
 loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -79,7 +79,7 @@ View(best5)
 
 ## Custom Gridsearch ------------------------------------------------------
 
-filename2 <- 'data/dataset2/grid_basis_4by4_custom'
+filename2 <- 'data/grid_basis_4by4_custom'
 model <- read_csv(paste0(filename2, '.csv'))
 loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -93,7 +93,7 @@ View(best5)
 
 ## Lee2018 Gridsearch ------------------------------------------------------
 
-filename1 <- 'data/dataset2/grid_basis_4by4_20by20_lee2018'
+filename1 <- 'data/grid_basis_4by4_20by20_lee2018'
 model <- read_csv(paste0(filename1, '.csv'))
 loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
@@ -104,7 +104,7 @@ View(best5)
 
 ## Custom Gridsearch ------------------------------------------------------
 
-filename2 <- 'data/dataset2/grid_basis_4by4_20by20_custom'
+filename2 <- 'data/grid_basis_4by4_20by20_custom'
 model <- read_csv(paste0(filename2, '.csv'))
 loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
   mutate(loss = sqrt(val_loss)) %>%
