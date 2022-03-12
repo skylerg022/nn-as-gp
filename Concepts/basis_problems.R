@@ -9,7 +9,7 @@ library(keras)
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
-source('../HelperFunctions/MakeNNModel.R')
+source('../HelperFunctions/Preprocess.R')
 source('../HelperFunctions/Defaults.R')
 
 
@@ -114,3 +114,8 @@ data_train %>%
   theme_minimal() +
   labs(col = 'Local N')
 
+ggsave('basis_problems.png',
+       width = pic_width * 2/3,
+       height = pic_height,
+       units = pic_units,
+       bg = 'white')
