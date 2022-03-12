@@ -9,6 +9,8 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
+source('../HelperFunctions/defaults.R')
+
 # Read in data
 load('data/AllSimulatedTemps.RData')
 data_train <- all.sim.data %>%
@@ -23,8 +25,8 @@ rm(all.sim.data)
 
 # How is the spatial data distributed?
 data_train %>%
-  ggplot(aes(x)) +
-  geom_histogram()
+  ggplot(aes(x, y)) +
+  geom_bin_2d()
 data_train %>%
   ggplot(aes(y)) +
   geom_histogram()
@@ -59,7 +61,11 @@ data_train %>%
   scale_fill_continuous(type = 'viridis') +
   theme_minimal()
 
-
+ggsave('pics/train.png',
+       width = pic_width * 2/3,
+       height = pic_height,
+       units = pic_units,
+       bg = 'white')
 
 # Choosing a validation set -----------------------------------------------
 
@@ -84,7 +90,13 @@ data_train2 %>%
   theme_minimal()
 
 mean(data_train2$validation)
-         
+
+ggsave('pics/trainvalsplit.png',
+       width = pic_width * 2/3,
+       height = pic_height,
+       units = pic_units,
+       bg = 'white')
+
 
 # Saving data -------------------------------------------------------------
 
