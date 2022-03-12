@@ -18,7 +18,7 @@ makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
   grid <- grid %>%
     mutate(learning_rate = exp( runif(n_grid, log(10^(-4)), log(0.2)) ),
            weight_decay = exp( runif(n_grid, log(10^(-8)), log(1)) ),
-           epochs = 30,
+           epochs = 100,
            batch_size = sample(c(2^4, 2^5, 2^6, 2^7, 2^8),
                                size = n_grid, replace = TRUE),
            sigma_w = runif(n_grid, 0.01, 2.5),

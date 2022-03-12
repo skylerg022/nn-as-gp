@@ -25,7 +25,7 @@ source('../HelperFunctions/Gridsearch.R')
 
 
 # Read in data
-load('data/dataset2_split.RData')
+load('data/SimulatedTempsSplit.RData')
 
 n_cores <- 30
 gridsearch(input_type = 'nn', modeltype = 'custom', 
@@ -33,4 +33,22 @@ gridsearch(input_type = 'nn', modeltype = 'custom',
            loss = loss_mean_squared_error())
 gridsearch(input_type = 'nn', modeltype = 'lee2018', 
            n_cores = n_cores, sqrt_n_knots = NULL,
+           loss = loss_mean_squared_error())
+gridsearch(input_type = 'nn_trans', modeltype = 'custom', 
+           n_cores = n_cores, sqrt_n_knots = NULL,
+           loss = loss_mean_squared_error())
+gridsearch(input_type = 'nn_trans', modeltype = 'lee2018', 
+           n_cores = n_cores, sqrt_n_knots = NULL,
+           loss = loss_mean_squared_error())
+gridsearch(input_type = 'basis', modeltype = 'custom', 
+           n_cores = n_cores, sqrt_n_knots = c(4),
+           loss = loss_mean_squared_error())
+gridsearch(input_type = 'basis', modeltype = 'lee2018', 
+           n_cores = n_cores, sqrt_n_knots = c(4),
+           loss = loss_mean_squared_error())
+gridsearch(input_type = 'basis', modeltype = 'custom', 
+           n_cores = n_cores, sqrt_n_knots = c(4,20),
+           loss = loss_mean_squared_error())
+gridsearch(input_type = 'basis', modeltype = 'lee2018', 
+           n_cores = n_cores, sqrt_n_knots = c(4,20),
            loss = loss_mean_squared_error())
