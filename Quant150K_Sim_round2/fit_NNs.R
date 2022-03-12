@@ -144,5 +144,4 @@ pred[,'basis_4by4_20by20_custom'] <-
 # Save prediction results
 pred %>%
   as.data.frame() %>%
-  select(-basis_4by4_20by20_lee) %>%
   write_csv('data/quant150ksim_testpreds.csv')
