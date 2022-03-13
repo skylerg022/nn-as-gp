@@ -8,17 +8,16 @@ if (rstudioapi::isAvailable()) {
 
 source('../HelperFunctions/Defaults.R')
 
-preds <- read_csv('data/dataset2_testpreds.csv')
-y <- read_csv('data/dataset2_testtrue.csv',
-              col_names = FALSE) %>%
-  pull()
+preds <- read_csv('data/quant150ksim_testpreds.csv')
+load('data/SimulatedTempsSplit.RData')
+y <- as.numeric(y_test)
 
 apply(preds %>%
         select(-c(x, y)),
       2, function(yhat) {
         sqrt(mean( (yhat - y)^2 ))
       }) %>%
-  round(5)
+  round(2)
 
 
 error <- preds
@@ -39,8 +38,12 @@ simple_test <- error %>%
 
 # Just test performance
 p_test <- simple_test %>%
-  filter(model == 'basis_4by4_20by20_custom') %>%
-  ggplot(aes(x, y, fill = yhat)) +
+  filter(model == 'basis_4by4_lee') %>%
+  ggplot(aes(x, y, 
+             xmin = min(x), xmax = max(x),
+             ymin = min(y), ymax = max(y),
+             fill = yhat)) +
+  geom_rect(fill = 'gray20') +
   geom_raster() +
   # facet_wrap(~model) +
   scale_fill_gradient2() +
@@ -48,7 +51,7 @@ p_test <- simple_test %>%
   labs(fill = 'Value')
 
 p_test %>%
-  ggsave('pics/error_4by4_20by20_custom.png', plot = .,
+  ggsave('pics/error_4by4_lee.png', plot = .,
          width = pic_width/3*2,
          height = pic_height,
          units = pic_units,
