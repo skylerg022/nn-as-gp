@@ -298,7 +298,7 @@ gridsearchEDAandClean <- function(model, loss, lee2018 = FALSE) {
   
   best5 <- loss_best %>%
     group_by(model_num) %>%
-    summarize(min_loss = round(min(loss), 2),
+    summarize(min_loss = round(min(loss), 4),
               min_loss_epoch = which.min(loss)) %>%
     inner_join(model, by = 'model_num') %>%
     select(-c(min_loss, min_loss_epoch),

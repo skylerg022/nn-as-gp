@@ -121,7 +121,7 @@ model_pars_lee <- c(n_layers = 4, layer_width = 2^9,
                     model_num = 1)
 model_pars <- c(n_layers = 8, layer_width = 2^7,
                 epochs = 60, batch_size = 2^5,
-                decay_rate = 0.1 / (n_train %/% 2^7), dropout_rate = 0,
+                decay_rate = 0.1 / (n_train %/% 2^5), dropout_rate = 0,
                 model_num = 158)
 
 ## Lee2018
