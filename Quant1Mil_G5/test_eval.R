@@ -8,8 +8,8 @@ if (rstudioapi::isAvailable()) {
 
 source('../HelperFunctions/Defaults.R')
 
-preds <- read_csv('data/dataset2_testpreds.csv')
-y <- read_csv('data/dataset2_testtrue.csv',
+preds <- read_csv('data/dataset1_testpreds.csv')
+y <- read_csv('data/dataset1_testtrue.csv',
               col_names = FALSE) %>%
   pull()
 
