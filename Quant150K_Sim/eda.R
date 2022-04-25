@@ -69,6 +69,27 @@ ggsave('pics/train.png',
        units = pic_units,
        bg = 'white')
 
+# Just test performance
+data_test %>%
+  mutate(across(c(x,y), round, digits = 2)) %>%
+  group_by(x, y) %>%
+  summarize(Value = mean(TrueTemp)) %>%
+  ggplot(aes(x, y, fill = Value,
+             xmin = min(x), xmax = max(x),
+             ymin = min(y), ymax = max(y))) +
+  geom_rect(fill = 'gray20') +
+  geom_raster() +
+  scale_fill_continuous(type = 'viridis') +
+  theme_minimal()
+
+p_test %>%
+  ggsave('pics/test.png', plot = .,
+         width = pic_width/3*2,
+         height = pic_height,
+         units = pic_units,
+         bg = 'white')
+
+
 
 # Choosing a validation set -----------------------------------------------
 
