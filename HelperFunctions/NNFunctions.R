@@ -14,7 +14,7 @@ library(keras)
 #     dropout_rate, model_num
 # Output: Customized neural network model object
 ## NOTE: Created model will work for continuous or binary response, but not categorical response.
-makeModel <- function(pars, input_length) {
+makeModel <- function(pars, input_length, binary_data = FALSE) {
   
   n_layers <- pars[[1]]
   layer_width <- pars[[2]]
@@ -36,8 +36,16 @@ makeModel <- function(pars, input_length) {
   model <- keras_model_sequential() %>%
     layer_dense(units = layer_width, input_shape = c(input_length), activation = 'relu') %>%
     layer_dropout(rate = dropout_rate) %>%
-    addLayers(n_layers - 1) %>%
-    layer_dense(units = 1)
+    addLayers(n_layers - 1)
+  
+  if(binary_data == TRUE) {
+    model <- model %>%
+      layer_dense(units = 1, activation = 'sigmoid')
+  }
+  else {
+    model <- model %>%
+      layer_dense(units = 1)
+  }
   
   return(model)
 }
@@ -50,7 +58,7 @@ makeModel <- function(pars, input_length) {
 #     batch_size, sigma_w, sigma_b, model_num
 # Output: Customized neural network model object
 ## NOTE: Created model will work for continuous or binary response, but not categorical response.
-makeModelLee2018 <- function(pars, input_length) {
+makeModelLee2018 <- function(pars, input_length, binary_data = FALSE) {
   
   n_layers <- pars[[1]]
   layer_width <- pars[[2]]
@@ -82,8 +90,16 @@ makeModelLee2018 <- function(pars, input_length) {
                 bias_initializer = initializer_random_normal(stddev = sigma_b),
                 kernel_regularizer = regularizer_l2(weight_decay),
                 bias_regularizer = regularizer_l2(weight_decay)) %>%
-    addLayers(n_layers - 1) %>%
-    layer_dense(units = 1)
+    addLayers(n_layers - 1)
+  
+  if(binary_data == TRUE) {
+    model <- model %>%
+      layer_dense(units = 1, activation = 'sigmoid')
+  }
+  else {
+    model <- model %>%
+      layer_dense(units = 1)
+  }
   
   return(model)
 }
@@ -116,7 +132,8 @@ makeModelLee2018 <- function(pars, input_length) {
 # - If test is 'grid', returns a list of model parameters and validation
 #   loss record across epochs
 fitModel <- function(pars, x_train, y_train, x_val = NULL, 
-                     y_val = NULL, modeltype = 'custom', 
+                     y_val = NULL, modeltype = 'custom',
+                     binary_data = FALSE,
                      loss = loss_mean_squared_error(), test = 'part_train') {
   
   # Check for erroneous inputs
@@ -168,9 +185,9 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
   
   input_length <- ncol(x_train)
   
-  model <- makeModFun(pars, input_length)
+  model <- makeModFun(pars, input_length, binary_data = binary_data)
   model %>%
-    compile(loss = loss, #loss = 'mse'
+    compile(loss = loss,
             optimizer = optimizer_adam(learning_rate = learning_rate,
                                        decay = decay_rate))
   
@@ -216,13 +233,21 @@ fitModel <- function(pars, x_train, y_train, x_val = NULL,
 
 evalNetwork <- function(x_train, y_train, x_val, y_val,
                         model_pars, x_test = NULL, y_test = NULL,
+                        binary_data = FALSE,
                         type = 'nn', pars_type = 'custom', 
                         sqrt_n_knots = NULL, plot = FALSE) {
   myenv <- environment()
   have_test_x <- !is.null(x_test)
   have_test_y <- !is.null(y_test)
   
-  # Pre-transformed data for visualizations
+  # New loss if data is binary
+  if(binary_data == TRUE) {
+    loss <- loss_binary_crossentropy()
+  } else {
+    loss <- loss_mean_squared_error()
+  }
+  
+  # raw data for visualizations
   data_train <- rbind(cbind(x_train, y_train),
                       cbind(x_val, y_val))
   if (have_test_x) {
@@ -345,9 +370,11 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
     
     y_train <- rbind(y_train, y_val)
     
-    model <- fitModel(model_pars, x_train, y_train, 
+    model <- fitModel(model_pars, x_train, y_train,
                       test = 'all_train',
-                      modeltype = pars_type)
+                      modeltype = pars_type,
+                      binary_data = binary_data,
+                      loss = loss)
     
     if (have_test_y == TRUE) {
       # Predictions (including test set) after fitting 100% of training set
@@ -424,11 +451,14 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
              bg = 'white')
     }
     
+    yhat_train <- model %>%
+      predict(x_train)
     yhat_test <- model %>%
       predict(x_test)
     
     results <- list(model = model,
                     val_loss = NULL,
+                    yhat_train = yhat_train,
                     yhat_test = yhat_test)
   # } else {
   #   yhat_test <- model %>%

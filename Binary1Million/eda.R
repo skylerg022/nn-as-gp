@@ -28,8 +28,8 @@ dat <- raster(file.name) %>%
 # Convert to dataframe and plot
 dat.df <- data.frame(x = rep(1:ncol(dat), nrow(dat)),
                      y = rep(1:nrow(dat), each = ncol(dat)),
-                     z = as.factor(c(dat)))
-ggplot(data = dat.df, aes(x = x, y = y, fill = z)) + 
+                     z = c(dat))
+ggplot(data = dat.df, aes(x = x, y = y, fill = as.factor(z))) + 
   geom_raster() +
   scale_fill_manual(values = qualitative_hcl(2, c = 100, l = 70)) +
   labs(fill = 'value')
@@ -52,15 +52,6 @@ n_train <- N - n_test
 test_idx <- sample(1:N, n_test, replace = FALSE)
 val_idx <- sample(1:n_train, n_train * (0.2), replace = FALSE)
 
-dat.df[-test_idx,][-val_idx,] %>% nrow()
-
-# Where is test set located?
-data_test %>%
-  mutate(across(c(x,y), round, digits = 3)) %>%
-  ggplot(aes(x, y)) +
-  geom_raster(fill = 'black') +
-  theme_minimal()
-# No highly concentrated regions
 
 # Saving data -------------------------------------------------------------
 

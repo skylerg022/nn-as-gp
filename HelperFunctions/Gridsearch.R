@@ -35,6 +35,7 @@ makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
 # gridsearch function for NN setups
 gridsearch <- function(input_type = 'nn', modeltype = 'custom', 
                        n_cores = 20, sqrt_n_knots = NULL,
+                       binary_data = FALSE,
                        loss = loss_mean_squared_error()) {
   myenv <- environment()
   
@@ -102,6 +103,7 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
                         function(pars) fitModel(pars, x_train, y_train, 
                                                 x_val, y_val, 
                                                 modeltype = modeltype,
+                                                binary_data = binary_data,
                                                 test = 'grid', loss = loss),
                         mc.cores = n_cores, mc.silent = FALSE)
     # mc.cleanup = FALSE, mc.allow.recursive = FALSE)
