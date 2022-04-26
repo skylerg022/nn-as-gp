@@ -6,7 +6,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-source('../HelperFunctions/Defaults.R')
+source('../../functions/Defaults.R')
 
 preds <- read_csv('data/quant150ksim_testpreds.csv')
 load('data/SimulatedTempsSplit.RData')

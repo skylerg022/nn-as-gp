@@ -8,7 +8,7 @@ tryCatch(setwd('C:/Users/skyle/Documents/GithubRepos/nn-as-gp/Quant150K_Sim'),
            message(paste0('Could not set directory. ',
                           'Assuming code is being run via Bash.'))
          })
-source('../HelperFunctions/MakeNNModel.R')
+source('../../functions/MakeNNModel.R')
 
 model_grid <- read_csv('data/gridsearch_nn/quant150k_grid.csv')
 

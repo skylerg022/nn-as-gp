@@ -17,11 +17,11 @@ if (rstudioapi::isAvailable()) {
 }
 
 # Make directories if needed
-source('../HelperFunctions/Defaults.R')
+source('../../functions/Defaults.R')
 dirCheck()
-source('../HelperFunctions/NNFunctions.R')
-source('../HelperFunctions/Preprocess.R')
-source('../HelperFunctions/Gridsearch.R')
+source('../../functions/NNFunctions.R')
+source('../../functions/Preprocess.R')
+source('../../functions/Gridsearch.R')
 
 
 # Read in data

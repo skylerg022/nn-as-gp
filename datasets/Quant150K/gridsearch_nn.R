@@ -16,8 +16,8 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 source('eda.R')
-source('../HelperFunctions/MakeNNModel.R')
-source('../HelperFunctions/Defaults.R')
+source('../../functions/MakeNNModel.R')
+source('../../functions/Defaults.R')
 
 # Make directories if needed
 dirCheck()

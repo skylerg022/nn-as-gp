@@ -10,7 +10,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-source('../HelperFunctions/Gridsearch.R')
+source('../../functions/Gridsearch.R')
 
 theme_set(theme_bw())
 

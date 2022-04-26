@@ -6,7 +6,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-source('../HelperFunctions/Defaults.R')
+source('../../functions/Defaults.R')
 
 preds <- read_csv('data/dataset1_testpreds.csv')
 y <- read_csv('data/dataset1_testtrue.csv',

@@ -18,7 +18,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-source('../HelperFunctions/Defaults.R')
+source('../../functions/Defaults.R')
 
 ## Read in the Data
 file.name <- "data/grf_x10_y10_vf0.1_seed1.tif"

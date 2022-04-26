@@ -5,8 +5,8 @@ library(keras)
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
-source('../HelperFunctions/MakeNNModel.R')
-source('../HelperFunctions/Defaults.R')
+source('../../functions/MakeNNModel.R')
+source('../../functions/Defaults.R')
 
 # Read in data
 load('data/SatelliteTempsSplit.RData')

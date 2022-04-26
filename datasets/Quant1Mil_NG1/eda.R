@@ -9,7 +9,7 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-source('../HelperFunctions/Defaults.R')
+source('../../functions/Defaults.R')
 
 # Set seed
 set.seed(22122)

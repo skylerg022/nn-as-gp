@@ -6,9 +6,9 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-source('../HelperFunctions/Preprocess.R')
-source('../HelperFunctions/NNFunctions.R')
-source('../HelperFunctions/Defaults.R')
+source('../../functions/Preprocess.R')
+source('../../functions/NNFunctions.R')
+source('../../functions/Defaults.R')
 
 # Read in data
 load('data/seed1_split.RData')
