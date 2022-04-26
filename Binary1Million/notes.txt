@@ -1,0 +1,30 @@
+
+Gridsearch Notes
+
+General
+
+
+X,Y NN
+## Lee2018
+
+## Custom
+
+
+X,Y Transformed NN
+## Lee2018
+
+## Custom
+
+
+Basis 4by4 NN
+## Lee2018
+
+## Custom
+
+
+Basis 4by4,20by20 NN
+## Lee2018
+
+## Custom
+
+

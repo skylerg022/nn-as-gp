@@ -7,13 +7,18 @@ library(tidyverse)
 library(raster)
 library(RSpectra)
 
+theme_set(theme_minimal())
+
 ## Read in the Data
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-file.name <- "./grf_x10_y10_vf0.1_seed1.tif"
+# Set working directory if using RStudio
+if (rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
+file.name <- "data/grf_x10_y10_vf0.1_seed1.tif"
 dat <- raster(file.name)
 
 ## Subset it to size x size
-size <- 500 # Size of 1001 is the full image for Sandia's images
+size <- 1001 # Size of 1001 is the full image for Sandia's images
 rand.row <- sample(1:(nrow(dat)-size+1), 1)
 rand.col <- sample(1:(ncol(dat)-size+1), 1)
 sub.dat <- as.matrix(dat)[rand.row:(rand.row+size-1), rand.col:(rand.col+size-1)]
