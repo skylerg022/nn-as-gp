@@ -1,5 +1,5 @@
 # Ignore data files
-*/data/*
+datasets/*/data/*
 # Ignore summary pics
 */pics/*
 # Ignore any image files
