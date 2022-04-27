@@ -6,11 +6,11 @@ This repository contains collaborative research work done with Dr. Matthew Heato
 
 The purpose of sharing this code is not to provide polished new functions to the community but rather to facilitate replicability of research results. Given the repository structure, you may extend this research to some new dataset with relative ease.
 
-This code facilitates formatting and fitting fully-connected neural networks to big data with only 2-dimensional location information and a continuous or binary outcome $y$ for each observation. We optimize hyperparameter settings via gridsearch and fit a neural net to big data and evaluate our predictions for some withheld test set. Below is an example of fitting a neural network to the simulated surface temperature training data from the **Quant150K_Sim** dataset (left). The performance of our best fit neural network (predicted - actual) on extrapolating surface temperatures for regions with cloud cover is also included (right).
+This code facilitates formatting and fitting fully-connected neural networks to big data with only 2-dimensional location information and a continuous or binary outcome for each observation. We optimize hyperparameter settings via gridsearch and fit a neural net to big data and evaluate our predictions for some withheld test set. Below is an example of fitting a neural network to the simulated surface temperature training data from the **Quant150K_Sim** dataset (left). The performance of our best fit neural network (predicted - actual) on extrapolating surface temperatures for regions with cloud cover is also included (right).
 
 <p float="middle">
-  <img src="datasets/Quant150K_Sim/pics/train.png" width="40%" />
-  <img src="datasets/Quant150K_Sim/pics/error_4by4_lee.png" width="40%" />
+  <img src="datasets/Quant150K_Sim/pics/train.png" width="49%" />
+  <img src="datasets/Quant150K_Sim/pics/error_4by4_lee.png" width="49%" />
 </p>
 
 
@@ -42,11 +42,7 @@ Helper functions are included in the **functions** directory and are used in the
 
 ## Data
 
-Not all data are included immediately in this repository. The location of each dataset's respective data or where to obtain it is detailed below.
-
-The land surface temperature data (Quant150K and Quant150K) should be available in this report by the end of April 2022.
-
-The quantitative 1-million and 90K datasets come from the "Competition on Spatial Statistics for Large Datasets" by Huang et al. (2021) and are available at [https://doi.org/10.25781/KAUST-8VP2V](https://doi.org/10.25781/KAUST-8VP2V). After downloading the files, create a **data** directory in the respective project folders (for example, the directory **Quant1Mil_G5/data**) and move the data files to their respective **data** directories.
+No data are included in this repository but can be retrieved elsewhere. The land surface temperature data (for Quant150K and Quant150K_Sim) is available at [https://github.com/finnlindgren/heatoncomparison/tree/master/Data](https://github.com/finnlindgren/heatoncomparison/tree/master/Data). The quantitative 1-million Guassian and Non-Gaussian datasets come from the "Competition on Spatial Statistics for Large Datasets" by Huang et al. (2021) and are available at [https://doi.org/10.25781/KAUST-8VP2V](https://doi.org/10.25781/KAUST-8VP2V). After downloading the files, create a **data** directory in the respective project folders (for example, the directory **Quant1Mil_G5/data**) and move the data files to their their appropriate **data** directory.
 
 
 ## Analysis Progress
@@ -61,5 +57,3 @@ The quantitative 1-million and 90K datasets come from the "Competition on Spatia
 
 - Binary1Mil
 - Quant150K
-- Quant90K
-
