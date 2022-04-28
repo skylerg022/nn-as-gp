@@ -2,86 +2,111 @@
 ## Show plots of validation loss performance across 
 ## neural net grid search
 
-# Load libraries
-library(tidyverse)
-
 # Set working directory if using RStudio
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
-# model <- read_csv('data/gridsearch_nn/grid_nn.csv')
-# loss <- read_csv('data/gridsearch_nn/grid_nn_val_mse.csv') %>%
-model <- read_csv('data/gridsearch_nn_trans/grid_nn_trans.csv')
-loss <- read_csv('data/gridsearch_nn_trans/grid_nn_trans_val_mse.csv') %>%
-  mutate(rmse = sqrt(val_mse)) %>%
+# Load libraries and needed functions
+source('../../functions/Defaults.R')
+source('../../functions/Gridsearch.R')
+
+# X,Y NN ----------------------------------------------------------------------
+
+## Lee2018 Gridsearch ------------------------------------------------------
+
+filename1 <- 'data/grid_nn_lee2018'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
   inner_join(model, by = 'model_num')
 
-# Grid Search: General Trends ---------------------------------------------
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
 
-# Filter down to RMSE less than 5
-loss %>%
-  ggplot(aes(x = epoch, y = rmse, group = model_num)) +
-  geom_smooth(se = FALSE, alpha = 0.5) +
-  facet_grid(epochs ~ layer_width) +
-  scale_y_continuous(limits = c(NA, 5))
-# It seems that more than 30 epochs is necessary for better
-#  performance
+## Custom Gridsearch ------------------------------------------------------
 
-loss %>%
-  ggplot(aes(x = epoch, y = rmse, group = model_num)) +
-  geom_smooth(se = FALSE, alpha = 0.5, col = 'royalblue') +
-  facet_grid(epochs ~ decay_rate) +
-  scale_y_continuous(limits = c(NA, 5))
-# Current decay rate settings may be too fast, don't seem to be helpful
-# Consider reducing decay rate further from 
+filename2 <- 'data/grid_nn_custom'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
 
 
-# 5 Best Models: Lowest RMSE Anywhere -------------------------------------
+# X,Y Transformed NN --------------------------------------------------
 
-# Filter down to models with lowest loss at any epoch
-min_loss_modelnum <- loss %>%
-  group_by(model_num) %>%
-  summarize(min_rmse = min(rmse)) %>%
-  slice_min(min_rmse, n = 5) %>%
-  pull(model_num)
-loss_best <- loss %>%
-  filter(model_num %in% min_loss_modelnum)
-  
-loss_best %>%
-  ggplot(aes(x = epoch, y = rmse, 
-             group = model_num, 
-             col = as.factor(model_num))) +
-  geom_line(alpha = 0.3) +
-  geom_smooth(se = FALSE) +
-  labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
-  theme_bw()
+## Lee2018 Gridsearch ------------------------------------------------------
 
-loss_best %>%
-  group_by(model_num, n_layers, layer_width, epochs,
-           batch_size, decay_rate, dropout_rate) %>%
-  summarize(min_rmse = round(min(rmse), 2),
-            min_rmse_epoch = which.min(rmse)) %>%
-  View()
+filename1 <- 'data/grid_nn_trans_lee2018'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
+
+## Custom Gridsearch ------------------------------------------------------
+
+filename2 <- 'data/grid_nn_trans_custom'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
 
 
-# 5 Best Models: Lowest Ending RMSE -------------------------------------
+# Basis NN 4by4 ------------------------------------------------------------
 
-best_end_modelnum <- loss %>%
-  group_by(model_num) %>%
-  filter(epoch == max(epoch)) %>%
-  ungroup() %>%
-  slice_min(rmse, n = 5) %>%
-  pull(model_num)
+## Lee2018 Gridsearch ------------------------------------------------------
 
-loss %>%
-  filter(model_num %in% best_end_modelnum) %>%
-  ggplot(aes(x = epoch, y = rmse, col = as.factor(model_num))) +
-  geom_line(alpha = 0.3) +
-  geom_smooth(se = FALSE) +
-  labs(col = 'Model', x = 'Epoch', y = 'RMSE') +
-  theme_bw()
+filename1 <- 'data/grid_basis_4by4_lee2018'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
 
-model %>%
-  filter(model_num %in% best_end_modelnum) %>%
-  View()
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
+
+## Custom Gridsearch ------------------------------------------------------
+
+filename2 <- 'data/grid_basis_4by4_custom'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
+
+
+# Basis NN 4by4&20by20 ---------------------------------------------------
+
+## Lee2018 Gridsearch ------------------------------------------------------
+
+filename1 <- 'data/grid_basis_4by4_20by20_lee2018'
+model <- read_csv(paste0(filename1, '.csv'))
+loss <- read_csv(paste0(filename1, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
+View(best5)
+
+## Custom Gridsearch ------------------------------------------------------
+
+filename2 <- 'data/grid_basis_4by4_20by20_custom'
+model <- read_csv(paste0(filename2, '.csv'))
+loss <- read_csv(paste0(filename2, '_val_loss.csv')) %>%
+  mutate(loss = sqrt(val_loss)) %>%
+  inner_join(model, by = 'model_num')
+
+best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
+View(best5)
+
