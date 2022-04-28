@@ -177,25 +177,25 @@ gridsearchEDAandClean <- function(model, loss, lee2018 = FALSE) {
       group_by(model_num) %>%
       filter(any(is.na(loss))) %>% 
       pull(model_num) %>% unique()
-    par(mfrow = c(1, 2))
-    ## No missing loss models
-    model %>%
-      filter(!(model_num %in% had_na)) %>%
-      pull(learning_rate) %>%
-      log() %>% density() %>% plot(main = '')
-    ## Missing loss models
-    model %>%
-      filter(model_num %in% had_na) %>%
-      pull(learning_rate) %>%
-      log() %>% density() %>% plot(main = '', ylab = '')
-    par(mfrow = c(1, 1))
-    mtext("Learning Rate Distribution:\nSuccessful vs. Failed NN Training", 
-          side = 3, line = 1, outer = FALSE)
-    readline(prompt = paste0('Learning rate distribution for NNs that',
-                             ' successfully trained vs. failed training.\n',
-                             'Press [Enter] to continue:'))
-    # Conclusion: likely due to exploding gradients; exclude
-    #  model numbers that didn't train successfully.min_loss <- loss %>%
+    # par(mfrow = c(1, 2))
+    # ## No missing loss models
+    # model %>%
+    #   filter(!(model_num %in% had_na)) %>%
+    #   pull(learning_rate) %>%
+    #   log() %>% density() %>% plot(main = '')
+    # ## Missing loss models
+    # model %>%
+    #   filter(model_num %in% had_na) %>%
+    #   pull(learning_rate) %>%
+    #   log() %>% density() %>% plot(main = '', ylab = '')
+    # par(mfrow = c(1, 1))
+    # mtext("Learning Rate Distribution:\nSuccessful vs. Failed NN Training", 
+    #       side = 3, line = 1, outer = FALSE)
+    # readline(prompt = paste0('Learning rate distribution for NNs that',
+    #                          ' successfully trained vs. failed training.\n',
+    #                          'Press [Enter] to continue:'))
+    # # Conclusion: likely due to exploding gradients; exclude
+    # #  model numbers that didn't train successfully.min_loss <- loss %>%
     loss <- loss %>%
       filter(!(model_num %in% had_na))
   }

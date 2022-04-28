@@ -24,16 +24,16 @@ pred <- cbind(x_test,
 n_train <- nrow(x_train) + nrow(x_val)
 
 # Lat-Long NN
-model_pars_lee <- c(n_layers = 2, layer_width = 2^8, 
-                    learning_rate = 0.0002030164,
-                    weight_decay = 2.646921e-07, 
-                    epochs = 5, batch_size = 2^5, 
-                    sigma_w = 2.0333117, sigma_b = 0.6507874, 
-                    model_num = 253)
-model_pars <- c(n_layers = 2, layer_width = 2^7,
-                epochs = 5, batch_size = 2^6,
-                decay_rate = 0, dropout_rate = 0,
-                model_num = 45)
+model_pars_lee <- c(n_layers = 8, layer_width = 2^8, 
+                    learning_rate = 0.0001192127,
+                    weight_decay = 9.380247e-08, 
+                    epochs = 61, batch_size = 2^5, 
+                    sigma_w = 1.121034, sigma_b = 0.32748548, 
+                    model_num = 100)
+model_pars <- c(n_layers = 8, layer_width = 2^8,
+                epochs = 45, batch_size = 2^8,
+                decay_rate = 0.1 / (n_train %/% 2^8), dropout_rate = 0,
+                model_num = 235)
 
 ## Lee2018
 pred[,'latlong_nn_lee'] <- 
@@ -55,15 +55,15 @@ pred[,'latlong_nn_custom'] <- fit$yhat_test
 
 # Lat-Long Transformed NN
 model_pars_lee <- c(n_layers = 4, layer_width = 2^9, 
-                    learning_rate = 0.0006413097,
-                    weight_decay = 1.650291e-07, 
-                    epochs = 35, batch_size = 2^8, 
-                    sigma_w = 2.208647, sigma_b = 0.52581911, 
-                    model_num = 144)
-model_pars <- c(n_layers = 16, layer_width = 2^7,
-                epochs = 90, batch_size = 2^6,
-                decay_rate = 0, dropout_rate = 0,
-                model_num = 40)
+                    learning_rate = 0.0009401810,
+                    weight_decay = 2.496104e-07, 
+                    epochs = 55, batch_size = 2^8, 
+                    sigma_w = 1.2427385, sigma_b = 0.06185929, 
+                    model_num = 7)
+model_pars <- c(n_layers = 8, layer_width = 2^7,
+                epochs = 60, batch_size = 2^8,
+                decay_rate = 0.1 / (n_train %/% 2^8), dropout_rate = 0,
+                model_num = 230)
 
 ## Lee2018
 pred[,'latlong_trans_lee'] <- 
@@ -85,15 +85,15 @@ pred[,'latlong_trans_custom'] <-
 
 # Basis 4by4
 model_pars_lee <- c(n_layers = 8, layer_width = 2^8, 
-                    learning_rate = 0.0003339872,
-                    weight_decay = 8.919018e-08, 
-                    epochs = 35, batch_size = 2^8, 
-                    sigma_w = 1.427448, sigma_b = 0.1936748, 
-                    model_num = 280)
+                    learning_rate = 0.0024747043,
+                    weight_decay = 2.906369e-08, 
+                    epochs = 50, batch_size = 2^8, 
+                    sigma_w = 2.041133, sigma_b = 0.643556342, 
+                    model_num = 90)
 model_pars <- c(n_layers = 4, layer_width = 2^9,
-                epochs = 45, batch_size = 2^7,
+                epochs = 95, batch_size = 2^7,
                 decay_rate = 0.1 / (n_train %/% 2^7), dropout_rate = 0,
-                model_num = -1)
+                model_num = 214)
 
 ## Lee2018
 pred[,'basis_4by4_lee'] <- 
@@ -114,16 +114,16 @@ pred[,'basis_4by4_custom'] <-
 
 
 # Basis 4by4&20by20
-model_pars_lee <- c(n_layers = 4, layer_width = 2^9,
-                    learning_rate = 0.0006105797,
-                    weight_decay = 4.368532e-08,
-                    epochs = 35, batch_size = 2^7,
-                    sigma_w = 0.1983667, sigma_b = 0.11823064,
-                    model_num = 1)
-model_pars <- c(n_layers = 8, layer_width = 2^7,
-                epochs = 60, batch_size = 2^5,
-                decay_rate = 0.1 / (n_train %/% 2^5), dropout_rate = 0,
-                model_num = 158)
+# model_pars_lee <- c(n_layers = 4, layer_width = 2^9,
+#                     learning_rate = 0.0006105797,
+#                     weight_decay = 4.368532e-08,
+#                     epochs = 35, batch_size = 2^7,
+#                     sigma_w = 0.1983667, sigma_b = 0.11823064,
+#                     model_num = 1)
+model_pars <- c(n_layers = 4, layer_width = 2^9,
+                epochs = 85, batch_size = 2^8,
+                decay_rate = 0.1 / (n_train %/% 2^8), dropout_rate = 0,
+                model_num = 238)
 
 ## Lee2018
 pred[,'basis_4by4_20by20_lee'] <-
