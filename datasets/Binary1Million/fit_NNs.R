@@ -114,12 +114,12 @@ pred[,'basis_4by4_custom'] <-
 
 
 # Basis 4by4&20by20
-# model_pars_lee <- c(n_layers = 4, layer_width = 2^9,
-#                     learning_rate = 0.0006105797,
-#                     weight_decay = 4.368532e-08,
-#                     epochs = 35, batch_size = 2^7,
-#                     sigma_w = 0.1983667, sigma_b = 0.11823064,
-#                     model_num = 1)
+model_pars_lee <- c(n_layers = 4, layer_width = 2^7,
+                    learning_rate = 0.0025565280,
+                    weight_decay = 2.992099e-08,
+                    epochs = 57, batch_size = 2^7,
+                    sigma_w = 0.8994819, sigma_b = 0.53524871,
+                    model_num = 405)
 model_pars <- c(n_layers = 4, layer_width = 2^9,
                 epochs = 85, batch_size = 2^8,
                 decay_rate = 0.1 / (n_train %/% 2^8), dropout_rate = 0,

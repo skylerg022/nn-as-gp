@@ -24,7 +24,7 @@ Basis 4by4 NN
 
 Basis 4by4,20by20 NN
 ## Lee2018
-
+0.277
 ## Custom
 0.223
 
