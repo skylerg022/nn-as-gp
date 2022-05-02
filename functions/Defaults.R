@@ -24,11 +24,15 @@ myggsave <- function(filename, plot) {
          bg = 'white')
 }
 
-dirCheck <- function() {
+CheckDir <- function() {
   # if (!dir.exists('data')) dir.create('data')
   if (!dir.exists('pics')) {
     message('No existing pic/ directory detected. Creating pic/ directory...')
     dir.create('pics')
+  }
+  if (!dir.exists('pics/gridsearch')) {
+    message('No existing pic/gridsearch/ directory detected. Creating directory...')
+    dir.create('pics/gridsearch')
   }
   if (!dir.exists('pics/final')) {
     message('No existing pic/final/ directory detected. Creating directory...')
