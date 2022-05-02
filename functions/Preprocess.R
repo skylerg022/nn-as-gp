@@ -149,3 +149,16 @@ predictorsScaled <- function(x_train, x_withheld = NULL, val_split = 0.2, test =
   }
 }
 
+
+# Create evenly spaced continuous values while maintaining the approximate 
+#  range and value of observation values
+# May not preserve range if number of bins is less than 100
+discretize <- function(x, nbins = 100) {
+  # If already evenly spaced, don't "discretize"
+  
+  # otherwise... make discrete
+  edges <- seq(min(x), max(x), length.out = nbins + 1)
+  binvals <- (edges[-1] + edges[1:nbins]) / 2
+  bin_idx <- .bincode(x, breaks = edges, right = FALSE, include.lowest = TRUE)
+  return(binvals[bin_idx])
+}
