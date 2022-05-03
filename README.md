@@ -21,11 +21,43 @@ This code requires a Linux based environment to run the multi-core parallel proc
 
 ## Directions
 
-To perform the gridsearch and fit the best neural network models to the data, first prepare the data for analysis. Create a dataset name (with no spaces) in the **dataset** directory. Create an **eda.R** file in this new directory as well as a **data** directory with the original dataset file, whether it is a csv, txt, or other type of file.
+This brief section provides all the direction you need to evaluate our model's performance on a particular spatial dataset. In the **dataset** directory, create a folder for your new dataset (with no spaces). Create an **eda.R** file in this new directory as well as a **data** folder with the original dataset file, whether it is a csv, txt, or other type of file.
 
-Using the existing **eda.R** files as an example, read in the data, investigate the data, and prepare the data to save as six different matrix objects. Let x_train, x_val, and x_test be the 2-column matrices that represent the location of each observation and y_train, y_val, and y_test be 1-column matrices with the response variable. Save all of these variables into the data file **data/DataSplit.RData**.
+Write the **eda.R** file to read the original dataset file. Save the data as **data/DataSplit.RData** with six different matrix objects: x_train, x_val, and x_test should be the 2-column matrices representing the location of each observation and y_train, y_val, and y_test be 1-column matrices with the response variable, whether binary or continuous.
 
-R CMD BATCH --no-save --no-echo '--args Binary1Million TRUE' grid_analysis.R analysis.Rout &
+After writing and running your **eda.R** file, you are ready to run the grid search algorithm. Due to the size of the gridsearch, we recommend dividing the grid search code among at least four different computing sources. A 4-batch version of **gridsearch.R** is provided in the **alt_gridsearch** directory. The following four lines of code should be run in the **alt_gridsearch** folder on different computers using the Bash command line:
+
+```
+R CMD BATCH --no-save '--args <dataset> <binary_data>' batch1.R <logfile1>.Rout &
+R CMD BATCH --no-save '--args <dataset> <binary_data>' batch2.R <logfile2>.Rout &
+R CMD BATCH --no-save '--args <dataset> <binary_data>' batch3.R <logfile3>.Rout &
+R CMD BATCH --no-save '--args <dataset> <binary_data>' batch4.R <logfile4>.Rout &
+```
+
+where \<dataset\> is a string for the name of the directory holding the eda.R and data files of a given dataset and \<binary_data\> is either TRUE or FALSE to indicate whether the response data is binary or continuous. \<logfile\>.Rout is the file that will record output produced by the R file. The ampersand symbol (&) at the end will make this job run in the background.
+
+If you would like to run everything on one computer, run the following line of code in the main directory:
+
+```
+R CMD BATCH --no-save '--args <dataset> <binary_data>' gridsearch.R <logfile>.Rout &
+```
+
+Running the gridsearch.R or batch.R scripts will produce gridsearch result datafiles in the **data/gridsearch** directory.
+
+Next, run the **grid_analysis.R** file next using
+
+```
+R CMD BATCH --no-save '--args <dataset> <binary_data>' grid_analysis.R <logfile>.Rout &
+```
+
+This will produce (1) a file called **final_model_setup.csv**  in the **data** directory that contains the best hyperparameter settings for the eight input-gridsearch structures and (2) summary plots about best performing neural networks (in terms of validation set RMSE or Cross-entropy loss) for each width-depth neural network framework. These plots are found in the **pics/gridsearch** directory.
+
+Lastly, run the **fit_NNs.R** code to fit four of the eight final models, producing prediction plots in **pics/final** and the train and test (if available) metrics for model predictions:
+
+```
+R CMD BATCH --no-save '--args <dataset> <binary_data>' fit_NNs.R <logfile>.Rout &
+```
+
 
 ## Directory Structure
 
