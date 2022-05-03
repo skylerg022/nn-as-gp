@@ -1,4 +1,6 @@
 
+# Note: also relies on Defaults.R. Make sure to load this as well within your code
+
 # Load necessary libraries and functions if not loaded already
 library(tidyverse)
 library(keras)
@@ -142,7 +144,8 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
 
 # Create a raster for all combinations of xvar and yvar hyperparameters
 customRaster <- function(data, xvar, yvar, fillvar,
-                         xlab, ylab, fill_lab) {
+                         xlab, ylab,
+                         binary_data = FALSE) {
   xvals <- pull(data, xvar)
   xvals_u <- sort(unique(xvals))
   yvals <- pull(data, yvar)
@@ -151,9 +154,17 @@ customRaster <- function(data, xvar, yvar, fillvar,
   data$xgrid <- sapply(xvals, function(x) which(x == xvals_u))
   data$ygrid <- sapply(yvals, function(x) which(x == yvals_u))
   
+  if (binary_data == TRUE) {
+    Trans <- function(x) x
+    fill_lab <- 'Min(Cross-\n  entropy)'
+  } else {
+    Trans <- function(x) log(x)
+    fill_lab <- 'Min(log(RMSE))'
+  }
+  
   p <- data %>%
     ggplot(aes(xgrid, ygrid, 
-               fill = log( eval(parse(text=fillvar)) ))) +
+               fill = Trans( eval(parse(text=fillvar)) ))) +
     geom_raster() +
     scale_x_continuous(breaks = seq(length(xvals_u)), labels = xvals_u) +
     scale_y_continuous(breaks = seq(length(yvals_u)), labels = yvals_u) +
@@ -161,151 +172,64 @@ customRaster <- function(data, xvar, yvar, fillvar,
     theme_minimal() +
     theme(panel.grid.minor = element_blank()) +
     labs(x = xlab, y = ylab,
-         fill = paste0('log(', fill_lab, ')'))
+         fill = fill_lab)
   
   return(p)
 }
 
 
-gridsearchEDAandClean <- function(model, loss, lee2018 = FALSE) {
+gridsearchEDAandClean <- function(model, loss, 
+                                  pars_type,
+                                  binary_data = FALSE,
+                                  filename = '') {
   
-  if (lee2018 == TRUE) {
-    # Investigate and remove NNs that failed fitting
-    # Compare learning rate density between NN setups that trained
-    #  and those that ever had loss of NA
+  if (pars_type == 'lee2018') {
+    # If learning rate is too high, NNs sometimes fail fitting.
+    #   Removing NNs that ever had loss of NA
     had_na <- loss %>%
       group_by(model_num) %>%
       filter(any(is.na(loss))) %>% 
-      pull(model_num) %>% unique()
-    # par(mfrow = c(1, 2))
-    # ## No missing loss models
-    # model %>%
-    #   filter(!(model_num %in% had_na)) %>%
-    #   pull(learning_rate) %>%
-    #   log() %>% density() %>% plot(main = '')
-    # ## Missing loss models
-    # model %>%
-    #   filter(model_num %in% had_na) %>%
-    #   pull(learning_rate) %>%
-    #   log() %>% density() %>% plot(main = '', ylab = '')
-    # par(mfrow = c(1, 1))
-    # mtext("Learning Rate Distribution:\nSuccessful vs. Failed NN Training", 
-    #       side = 3, line = 1, outer = FALSE)
-    # readline(prompt = paste0('Learning rate distribution for NNs that',
-    #                          ' successfully trained vs. failed training.\n',
-    #                          'Press [Enter] to continue:'))
-    # # Conclusion: likely due to exploding gradients; exclude
-    # #  model numbers that didn't train successfully.min_loss <- loss %>%
+      pull(model_num) %>% 
+      unique()
     loss <- loss %>%
       filter(!(model_num %in% had_na))
   }
   
   min_loss <- loss %>%
     group_by(model_num) %>%
-    summarize(min_loss = min(loss)) %>%
+    summarize(min_loss = signif( min(loss), 3 )) %>%
     inner_join(model, by = 'model_num')
   
   # Compare average best loss for each group (layer_width, n_layers) of NNs
-  avg_loss <- min_loss %>%
+  vis_min_loss <- min_loss %>%
     group_by(layer_width, n_layers) %>%
-    summarize(min_loss = mean(min_loss))
-  customRaster(avg_loss, xvar = 'layer_width', yvar = 'n_layers', 
-               fillvar = 'min_loss', xlab = 'Layer Width', 
-               ylab = 'Hidden Layers', fill_lab = 'LOSS') %>%
-    print()
-  readline(prompt = paste0('Log average of best validation LOSS for ',
-                           'each trained NN, grouped by (Layer Width, # ',
-                           'of Hidden Layers).\n',
-                           'Press [Enter] to continue:'))
-  # Does batch size affect the LOSS performance?
-  p <- min_loss %>%
-    ggplot(aes(as.factor(batch_size), log(min_loss))) + 
-    geom_violin() + 
-    labs(x = 'Batch Size', y = 'log(Best LOSS)') +
-    coord_flip()
-  print(p)
-  readline(prompt = paste0('Log average of best validation LOSS for ',
-                           'each trained NN, grouped by (Batch Size, ',
-                           'Layer Width).\n',
-                           'Press [Enter] to continue:'))
+    summarize(min_loss = min(min_loss))
+  p <- customRaster(vis_min_loss, xvar = 'layer_width', yvar = 'n_layers', 
+                    fillvar = 'min_loss', xlab = 'Layer Width', 
+                    ylab = 'Hidden Layers',
+                    binary_data = binary_data)
+  myggsave(filename = paste0('pics/gridsearch/frame_', filename, '.pdf'), plot = p)
   
-  if (lee2018 == TRUE) {
-    # # Does weight decay make a difference in minimum val LOSS?
-    # min_loss %>%
-    #   ggplot(aes(weight_decay, log(min_loss))) +
-    #   geom_point() +
-    #   labs(x = 'Weight Decay', y = 'Log(Best LOSS)')
-    # 
-    # # How about learning rate?
-    # min_loss %>%
-    #   ggplot(aes(learning_rate, log(min_loss))) +
-    #   geom_point(alpha = 0.7) +
-    #   labs(x = 'Learning Rate', y = 'log(Best LOSS)')
-    
-    # Interesting effect on LOSS for (learning rate, weight decay) combos
-    # Not visible in raster plot
-    # min_loss %>%
-    #   mutate(log_learning_rate = round(log(learning_rate)),
-    #          log_weight_decay = round(log(weight_decay)/2)) %>%
-    #   customRaster(xvar = 'log_learning_rate', yvar = 'log_weight_decay', 
-    #                fillvar = 'min_loss', xlab = 'log(Learning Rate)', 
-    #                ylab = 'log(Weight Decay)', fill_lab = 'LOSS')
-    p <- min_loss %>%
-      ggplot(aes(log(learning_rate), log(weight_decay), col = log(min_loss))) +
-      geom_point(alpha = 0.9, size = 2) +
-      scale_color_continuous(type = 'viridis') +
-      labs(x = 'log(Learning Rate)', y = 'log(Weight Decay)', 
-           col = 'log(Best LOSS)')
-    print(p)
-    readline(prompt = paste0('Log LOSS for each trained NN across ',
-                             'varying learning rate and weight decay settings.\n',
-                             'Press [Enter] to continue:'))
-  }
-  
-  # Filter down to LOSS less than 5
-  p <- loss %>%
-    ggplot(aes(x = epoch, y = loss, group = model_num)) +
-    geom_line(alpha = 0.5) +
-    facet_grid(n_layers ~ layer_width) +
-    scale_y_continuous(limits = c(NA, 5)) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(x = 'Epoch')
-  print(p)
-  readline(prompt = paste0('LOSS for all trained NN.\n',
-                           'Press [Enter] to continue:'))
-  
-  ### 5 Best Models: Lowest LOSS Anywhere -------------------------------------
+  ### Best Models: Lowest LOSS -------------------------------------
+  # Looking for lowest loss (to 3 sig figs) and largest number of epochs trained
+  #  (to act as a tie-breaker for models with the same loss)
   
   # Filter down to models with lowest loss at any epoch
   min_loss_modelnum <- min_loss %>%
-    # group_by(model_num) %>%
-    # summarize(min_loss = min(loss)) %>%
-    slice_min(min_loss, n = 5) %>%
+    filter(min_loss == min(min_loss)) %>%
     pull(model_num)
   loss_best <- loss %>%
     filter(model_num %in% min_loss_modelnum)
   
-  p <- loss_best %>%
-    ggplot(aes(x = epoch, y = loss, 
-               group = model_num, 
-               col = as.factor(model_num))) +
-    geom_line(alpha = 0.3) +
-    geom_smooth(se = FALSE) +
-    labs(col = 'Model', x = 'Epoch', y = 'LOSS') +
-    theme_bw() +
-    scale_y_continuous(limits = c(NA, 2.75))
-  print(p)
-  readline(prompt = paste0('Validation LOSS for 5 NN with lowest LOSS.\n',
-                           'Press [Enter] to continue:'))
-  
-  best5 <- loss_best %>%
+  best <- loss_best %>%
     group_by(model_num) %>%
-    summarize(min_loss = round(min(loss), 4),
+    summarize(min_loss = signif(min(loss), 3),
               min_loss_epoch = which.min(loss)) %>%
+    ungroup() %>%
+    filter(min_loss_epoch == max(min_loss_epoch)) %>%
     inner_join(model, by = 'model_num') %>%
     select(-c(min_loss, min_loss_epoch),
            c(min_loss, min_loss_epoch))
   
-  return(best5)
-  
+  return(best)
 }

@@ -42,106 +42,35 @@ source('../../functions/Gridsearch.R')
 CheckDir()
 
 # Read in data
-load('data/DataSplit.RData')
+# load('data/DataSplit.RData')
 
 
-# Raw Location NN ----------------------------------------------------------
+mod_types <- expand.grid(pars_type = c('custom', 'lee2018'),
+                         type = c('nn', 'nn_trans', 'basis_4by4', 'basis_4by4_20by20'))
 
-## Lee2018 Gridsearch ------------------------------------------------------
+# Load grid search result csv's; identify and return best model;
+#   also save plot summarizing best loss at different layer-width settings
+models <- apply(mod_types, 1,
+                function(mod_type) {
+                  type <- mod_type[2]
+                  pars_type <- mod_type[1]
+                  file_suffix <- paste0(type, '_', pars_type)
+                  filename <- paste0(file_prefix, file_suffix)
+                  
+                  model <- read_csv(paste0(filename, '.csv')) %>%
+                    suppressMessages()
+                  loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
+                    suppressMessages() %>%
+                    mutate(loss = LossTrans(val_loss)) %>%
+                    inner_join(model, by = 'model_num')
+                  
+                  best <- gridsearchEDAandClean(model, loss, pars_type = pars_type,
+                                                binary_data = binary_data,
+                                                filename = file_suffix)
+                  best
+                }) %>%
+  reduce(bind_rows)
 
-file_prefix <- 'data/gridsearch/grid_'
-filename <- paste0(file_prefix, 'nn_lee2018')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
-View(best5)
-
-## Custom Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'nn_custom')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
-View(best5)
-
-
-# X,Y Transformed NN --------------------------------------------------
-
-## Lee2018 Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'nn_trans_lee2018')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
-View(best5)
-
-## Custom Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'nn_trans_custom')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
-View(best5)
-
-
-# Basis NN 4by4 ------------------------------------------------------------
-
-## Lee2018 Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'basis_4by4_lee2018')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
-View(best5)
-
-## Custom Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'basis_4by4_custom')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
-View(best5)
-
-
-# Basis NN 4by4&20by20 ---------------------------------------------------
-
-## Lee2018 Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'basis_4by4_20by20_lee2018')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = TRUE)
-View(best5)
-
-## Custom Gridsearch ------------------------------------------------------
-
-filename <- paste0(file_prefix, 'basis_4by4_20by20_custom')
-model <- read_csv(paste0(filename, '.csv'))
-loss <- read_csv(paste0(filename, '_val_loss.csv')) %>%
-  mutate(loss = LossTrans(val_loss)) %>%
-  inner_join(model, by = 'model_num')
-
-best5 <- gridsearchEDAandClean(model, loss, lee2018 = FALSE)
-View(best5)
-
+# Save best models in preparation for fitting them
+bind_cols(mod_types, models) %>%
+  write_csv('data/final_models_setup.csv')

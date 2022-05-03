@@ -19,6 +19,14 @@ This code facilitates formatting and fitting fully-connected neural networks to 
 This code requires a Linux based environment to run the multi-core parallel processing used in the gridsearch algorithm. Therefore, a macOS or Linux distribution (NOT Windows) is required to run the analysis code.
 
 
+## Directions
+
+To perform the gridsearch and fit the best neural network models to the data, first prepare the data for analysis. Create a dataset name (with no spaces) in the **dataset** directory. Create an **eda.R** file in this new directory as well as a **data** directory with the original dataset file, whether it is a csv, txt, or other type of file.
+
+Using the existing **eda.R** files as an example, read in the data, investigate the data, and prepare the data to save as six different matrix objects. Let x_train, x_val, and x_test be the 2-column matrices that represent the location of each observation and y_train, y_val, and y_test be 1-column matrices with the response variable. Save all of these variables into the data file **data/DataSplit.RData**.
+
+R CMD BATCH --no-save --no-echo '--args Binary1Million FALSE' test.R test.Rout
+
 ## Directory Structure
 
 Each dataset analysis is contained the **datasets** directory. Within **Quant150K_Sim**, for example,

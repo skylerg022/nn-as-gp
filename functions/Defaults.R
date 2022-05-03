@@ -25,7 +25,16 @@ myggsave <- function(filename, plot) {
 }
 
 CheckDir <- function() {
-  # if (!dir.exists('data')) dir.create('data')
+  if (!dir.exists('data')) {
+    message <- paste0("data/ directory doesn't exist. Create the directory ",
+                      "and prepare the DataSplit.RData file, then continue ",
+                      "by running the gridsearch.R file.")
+    stop(message)
+  }
+  if (!dir.exists('data/gridsearch')) {
+    message('No existing data/gridsearch/ directory detected. Creating directory...')
+    dir.create('data/gridsearch')
+  }
   if (!dir.exists('pics')) {
     message('No existing pic/ directory detected. Creating pic/ directory...')
     dir.create('pics')
