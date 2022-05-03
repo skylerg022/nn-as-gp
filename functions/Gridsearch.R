@@ -132,8 +132,10 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
   } else {
     basis_knots <- ''
   }
-  write_csv(grid, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '.csv'))
-  write_csv(val_df, paste0('data/grid_', input_type, '_', basis_knots, modeltype, '_val_loss.csv'))
+  write_csv(grid, paste0('data/gridsearch/grid_', input_type, '_', 
+                         basis_knots, modeltype, '.csv'))
+  write_csv(val_df, paste0('data/gridsearch/grid_', input_type, '_', 
+                           basis_knots, modeltype, '_val_loss.csv'))
   
   return()
 }

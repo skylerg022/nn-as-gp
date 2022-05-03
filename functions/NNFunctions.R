@@ -396,8 +396,8 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
       
       p <- ErrorPlot(data_raster)
       
-      myggsave(paste0('pics/final/', fit_name, 'error_all.pdf'), plot = p)
-      myggsave(paste0('pics/final/', fit_name, 'error_all.png'), plot = p)
+      myggsave(paste0('pics/final/', fit_name, '_error_all.pdf'), plot = p)
+      myggsave(paste0('pics/final/', fit_name, '_error_all.png'), plot = p)
     }
     
     # Test only prediction plot
@@ -420,8 +420,8 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
       
       p <- ErrorPlot(data_raster)
       
-      myggsave(paste0('pics/final/', fit_name, 'error_test.pdf'), plot = p)
-      myggsave(paste0('pics/final/', fit_name, 'error_test.png'), plot = p)
+      myggsave(paste0('pics/final/', fit_name, '_error_test.pdf'), plot = p)
+      myggsave(paste0('pics/final/', fit_name, '_error_test.png'), plot = p)
     }
     
     # Return train and (if available) test metrics
@@ -542,4 +542,4 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
   return(list(model = model,
               metrics = metrics))
 }
-  
+

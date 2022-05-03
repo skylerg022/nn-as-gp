@@ -5,10 +5,12 @@
 ##  for both Lee2018 and Custom grid searches)
 
 # This code is meant to be run via the bash command line using
-#  Rscript fit_NNs.R <dataset name> <binary_data>
+#  R CMD BATCH --no-save '--args <dataset name> <binary_data>' grid_analysis.R <logfile>.Rout &
 #  where <dataset name> is a string for the name of the directory holding the
 #  eda.R and data files of a given dataset and <binary_data> is either TRUE or
-#  FALSE to indicate whether the response data is binary or continuous
+#  FALSE to indicate whether the response data is binary or continuous.
+#  <logfile>.Rout is the file that will record output produced by the R file.
+#  The ampersand symbol (&) at the end will make this job run in the background.
 args <- commandArgs(trailingOnly = TRUE)
 
 # ...however, uncomment the following lines to run this code in RStudio
@@ -16,7 +18,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # if (rstudioapi::isAvailable()) {
 #   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 # }
-# args <- c('', 'FALSE')
+# args <- c('Binary1Million', TRUE)
 
 # Check that dataset exists
 dir_name <- paste0(getwd(), '/datasets/', args[1])

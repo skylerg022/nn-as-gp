@@ -25,7 +25,7 @@ To perform the gridsearch and fit the best neural network models to the data, fi
 
 Using the existing **eda.R** files as an example, read in the data, investigate the data, and prepare the data to save as six different matrix objects. Let x_train, x_val, and x_test be the 2-column matrices that represent the location of each observation and y_train, y_val, and y_test be 1-column matrices with the response variable. Save all of these variables into the data file **data/DataSplit.RData**.
 
-R CMD BATCH --no-save --no-echo '--args Binary1Million FALSE' test.R test.Rout
+R CMD BATCH --no-save --no-echo '--args Binary1Million TRUE' grid_analysis.R analysis.Rout &
 
 ## Directory Structure
 
