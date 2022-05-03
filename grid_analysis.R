@@ -48,6 +48,8 @@ CheckDir()
 mod_types <- expand.grid(pars_type = c('custom', 'lee2018'),
                          type = c('nn', 'nn_trans', 'basis_4by4', 'basis_4by4_20by20'))
 
+file_prefix <- 'data/gridsearch/grid_'
+
 # Load grid search result csv's; identify and return best model;
 #   also save plot summarizing best loss at different layer-width settings
 models <- apply(mod_types, 1,
