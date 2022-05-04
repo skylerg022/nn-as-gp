@@ -2,11 +2,9 @@
 
 ## Introduction
 
-This repository contains collaborative research work done with Dr. Matthew Heaton, a professor in the Department of Statistics at Brigham Young University actively researching areas in spatial statistics ([https://statistics.byu.edu/directory/heaton-matthew](https://statistics.byu.edu/directory/heaton-matthew)). We used the code in this repository for the research covered in my Master's project writeup, [**Substituting Neural Networks for Gaussian Processes**](https://github.com/skylerg022/nn-as-gp/blob/main/masters_writeup_4_15.pdf), and appended work following the report dated April 15, 2022. This research work is evangelical in nature, preaching the gospel of neural networks to the statistical community as a viable option for predictive modeling in lieu of intractable Gaussian process modeling for big data.
+The primary challenge of spatial statistics is to account for the inherent correlation that arises in the data due to proximity in sampling locations. To account for this correlation, spatial statisticians traditionally use the Gaussian process (GP). However, the GP is plagued by computational intractability, rendering it infeasible for use on large spatial data sets. On the other hand, neural networks (NNs) have arisen as a flexible approach for modeling nonlinear relationships. To date, however, neural networks have only been scarcely used for problems in spatial statistics. In this collaborative research work with Dr. Matthew J. Heaton ([https://statistics.byu.edu/directory/heaton-matthew](https://statistics.byu.edu/directory/heaton-matthew)), we implement neural networks for spatial data (for a writeup of the work we have done as of April 15, 2022, see [**Substituting Neural Networks for Gaussian Processes**](https://github.com/skylerg022/nn-as-gp/blob/main/masters_writeup_4_15.pdf)). This directory contains the code from this research work necessary to implement the network fitting and predicting yourself.
 
-The purpose of sharing this code is not to provide polished new functions to the community but rather to facilitate replicability of research results. Given the repository structure, you may extend this research to some new dataset with relative ease.
-
-This code facilitates formatting and fitting fully-connected neural networks to big data with only 2-dimensional location information and a continuous or binary outcome for each observation. We optimize hyperparameter settings via gridsearch and fit a neural net to big data and evaluate our predictions for some withheld test set. Below is an example of fitting a neural network to the simulated surface temperature training data from the **Quant150K_Sim** dataset (left). The performance of our best fit neural network (predicted - actual) on extrapolating surface temperatures for regions with cloud cover is also included (right).
+This code facilitates formatting and fitting fully-connected neural networks to big data with only 2-dimensional location information and a continuous or binary outcome for each observation. We optimize hyperparameter settings via gridsearch, fit a neural net to big data, and evaluate our predictions for some withheld test set. Below is an example of fitting a neural network to the simulated surface temperature training data from the **Quant150K_Sim** dataset (left). The performance of our best fit neural network (predicted - actual) on extrapolating surface temperatures for regions with cloud cover is also included (right).
 
 <p float="middle">
   <img src="datasets/Quant150K_Sim/pics/train.png" width="49%" />
@@ -16,8 +14,17 @@ This code facilitates formatting and fitting fully-connected neural networks to 
 
 ## Requirements
 
-This code requires a Linux based environment to run the multi-core parallel processing used in the gridsearch algorithm. Therefore, a macOS or Linux distribution (NOT Windows) is required to run the analysis code.
+The grid search code for this project uses parallel processing and is meant to be run via the command line on either a MacOS or Linux machine. However, all other code can be run on any type of operating system. Ideally, you should have at least one machine with 16 cores and around 126 GB of RAM for the grid search computations.
 
+Run the following installation commands in R to be capable of running all included code:
+
+```
+packs <- c('tidyverse', 'keras', 'parallel',
+           'pryr', 'lme4', 'raster',
+           'Rspectra', 'colorspace')
+install.packages(packs)
+keras::install_keras()
+```
 
 ## Directions
 
@@ -61,39 +68,30 @@ R CMD BATCH --no-save '--args <dataset> <binary_data>' fit_NNs.R <logfile>.Rout 
 
 ## Directory Structure
 
-Each dataset analysis is contained the **datasets** directory. Within **Quant150K_Sim**, for example,
+The purposes of the directories in this repository are outlined below:
 
-The files within each dataset are meant to be used in the following order:
+- **datasets**: Houses the unique exploratory data analysis file **eda.R**, all data, and analysis plots of each dataset.
 
-1. eda.R: The data is visualized and split into the proper train, validation, and test set objects if necessary.
+- **functions**: Contains helper functions used in the analysis files.
 
-2. gridsearch.R: This file contains the code to run to evaluate different hyperparameter settings, i.e. different neural network setups.
+- **concepts**: Contains modeling concepts discussed in the [Master's project writeup](https://github.com/skylerg022/nn-as-gp/blob/main/masters_writeup_4_15.pdf).
 
-3. grid_analysis.R: This code pulls from the grid search results saved in the **data** folder to help the investigator pick the neural network settings that minimize the loss function for the validation data.
-
-4. fit_NNs.R: Code to fit the final eight best-performing models (each with a different input transformation or a different grid for grid search)
-
-5. test_eval.R: Code to evaluate the model fit to the true test data if test response data is available.
-
-Notes were taken in notes.txt while analyzing the grid search results to find quantitative patterns in the data.
-
-Helper functions are included in the **functions** directory and are used in the analysis files. The **concepts** directory contains modeling concepts that are discussed in the [Master's project report](https://github.com/skylerg022/nn-as-gp/blob/main/masters_writeup_4_15.pdf).
+- **alt_gridsearch**: Contains code for splitting up the grid search work for eight input-gridsearch combinations, considering four different model input types (raw location data, appended squared location data transformation, coarse radial basis function expansion, and multi-resolution -- both coarse and fine-- radial basis function expansion) and two different hyperparameter search grids (a custom grid and another referred to as Lee2018).
 
 
 ## Data
 
-No data are included in this repository but can be retrieved elsewhere. The land surface temperature data (for Quant150K and Quant150K_Sim) is available at [https://github.com/finnlindgren/heatoncomparison/tree/master/Data](https://github.com/finnlindgren/heatoncomparison/tree/master/Data). The quantitative 1-million Guassian and Non-Gaussian datasets come from the "Competition on Spatial Statistics for Large Datasets" by Huang et al. (2021) and are available at [https://doi.org/10.25781/KAUST-8VP2V](https://doi.org/10.25781/KAUST-8VP2V). After downloading the files, create a **data** directory in the respective project folders (for example, the directory **Quant1Mil_G5/data**) and move the data files to their their appropriate **data** directory.
+Only the data used in **ToyDataset** are included in this repository. A brief description and the data file locations of each dataset are provided below (Note: you will need to create the **data** directory within each dataset folder):
 
+- **Quant150K_Sim**: Simulated land surface temperature data whose test observations represent missing data due to cloud cover. The data is available to download at [https://github.com/finnlindgren/heatoncomparison/tree/master/Data](https://github.com/finnlindgren/heatoncomparison/tree/master/Data). Save **AllSimulatedTemps.RData** into the **Quant150K_Sim/data** directory. 
 
-## Analysis Progress
+- **Quant150K**: Real land surface temperature observations. Located at the same place as **Quant150K_Sim**'s data. Save **AllSatelliteTemps.RData** into the **Quant150K/data** directory.
 
-#### Finished Analyses
+- **Quant1Mil_G5**: Gaussian simulated data with a sample size of 1 million from the "Competition on Spatial Statistics for Large Datasets" by Huang et al. (2021). The data is available at [https://doi.org/10.25781/KAUST-8VP2V](https://doi.org/10.25781/KAUST-8VP2V). Save **dataset01_training.csv**, **dataset01_testing.csv**, and **truemeasurements/Z_01.csv** from the **Sub-competition_2b** folder into the **Quant1Mil_G5/data** directory of this repository.
 
-- Quant1Mil_G5
-- Quant1Mil_NG1
-- Quant150K_Sim
+- **Quant1Mil_NG1**: Non-Gaussian simulated data with a sample size of 1 million from the same location as **Quant1Mil_G5**. Save **dataset01_training.csv**, **dataset01_testing.csv**, and **truemeasurements/Z_01.csv** from the **Sub-competition_2b** folder into the **Quant1Mil_G5/data** directory of this repository.
 
-#### Unfinished Analyses
+- **Binary1Million**: 
 
-- Binary1Mil
-- Quant150K
+- **ToyDataset**: A subsample of about 9,000 observations from **Quant1Mil_NG1**.
+
