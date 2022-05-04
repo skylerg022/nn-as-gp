@@ -1,6 +1,4 @@
-## Skyler Gray
 ## Exploratory data analysis of Binary1Mil data
-
 
 ## Libraries
 library(tidyverse)
@@ -8,19 +6,23 @@ library(raster)
 library(RSpectra)
 library(colorspace)
 
-theme_set(theme_minimal())
-
-# Set seed
-set.seed(425)
-
 # Set working directory if using RStudio
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
+# Load default plot saving function and create pic/ directories
 source('../../functions/Defaults.R')
+CheckDir()
 
-## Read in the Data
+# Adjust ggplot theme
+theme_set(theme(panel.background = element_rect(fill = 'gray30'),
+                panel.grid = element_blank()))
+
+# Set seed
+set.seed(425)
+
+# Read in the Data
 file.name <- "data/grf_x10_y10_vf0.1_seed1.tif"
 dat <- raster(file.name) %>%
   as.matrix()
@@ -29,21 +31,18 @@ dat <- raster(file.name) %>%
 dat.df <- data.frame(x = rep(1:ncol(dat), nrow(dat)),
                      y = rep(1:nrow(dat), each = ncol(dat)),
                      z = c(dat))
-ggplot(data = dat.df, aes(x = x, y = y, fill = as.factor(z))) + 
+p <- dat.df %>%
+  ggplot(aes(x = x, y = y, fill = as.factor(z))) + 
   geom_raster() +
   scale_fill_manual(values = qualitative_hcl(2, c = 100, l = 70)) +
   labs(fill = 'value')
-
-ggsave('pics/all.png',
-       width = pic_width * (2/3),
-       height = pic_height,
-       units = pic_units,
-       bg = 'white')
+p
+myggsave(filename = 'pics/all.png', plot = p)
+myggsave(filename = 'pics/all.pdf', plot = p)
 
 # Data from a raster file is uniformly distributed across the 2D space
 
 # Correlation apparent. Too large a sample size to view variogram.
-
 
 # Randomly assign train, val, and test data
 N <- nrow(dat.df)
@@ -77,4 +76,4 @@ y_test <- dat.df[test_idx, 3, drop = FALSE] %>%
 save(x_train, y_train,
      x_val, y_val,
      x_test, y_test,
-     file = 'data/seed1_split.RData')
+     file = 'data/DataSplit.RData')

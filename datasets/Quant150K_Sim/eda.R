@@ -1,4 +1,3 @@
-## Skyler Gray
 ## Exploratory data analysis of quant150k simulated training data
 
 ## Libraries
@@ -9,10 +8,13 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
+# Load default plot saving function and create pic/ directories
 source('../../functions/Defaults.R')
+CheckDir()
 
-# Set seed
-set.seed(22122)
+# Adjust ggplot theme
+theme_set(theme(panel.background = element_rect(fill = 'gray30'),
+                panel.grid = element_blank()))
 
 # Read in data
 load('data/AllSimulatedTemps.RData')
@@ -54,41 +56,28 @@ ndistinct / ( nrow(data_train) + nrow(data_test) )
 # Visualize data
 # points not evenly spaced from each other. Averaging values in each "bin"
 # and displaying a 100 x 100 representation of the spatial data
-data_train %>%
+p <- data_train %>%
   mutate(across(c(x,y), round, digits = 2)) %>%
   group_by(x, y) %>%
   summarize(Value = mean(values)) %>%
   ggplot(aes(x, y, fill = Value)) +
   geom_raster() +
-  scale_fill_continuous(type = 'viridis') +
-  theme_minimal()
-
-ggsave('pics/train.png',
-       width = pic_width * (2/3),
-       height = pic_height,
-       units = pic_units,
-       bg = 'white')
+  scale_fill_continuous(type = 'viridis')
+p
+myggsave(filename = 'pics/train.png', plot = p)
+myggsave(filename = 'pics/train.pdf', plot = p)
 
 # Just test performance
-data_test %>%
+p <- data_test %>%
   mutate(across(c(x,y), round, digits = 2)) %>%
   group_by(x, y) %>%
   summarize(Value = mean(TrueTemp)) %>%
-  ggplot(aes(x, y, fill = Value,
-             xmin = min(x), xmax = max(x),
-             ymin = min(y), ymax = max(y))) +
-  geom_rect(fill = 'gray20') +
+  ggplot(aes(x, y, fill = Value)) +
   geom_raster() +
-  scale_fill_continuous(type = 'viridis') +
-  theme_minimal()
-
-p_test %>%
-  ggsave('pics/test.png', plot = .,
-         width = pic_width/3*2,
-         height = pic_height,
-         units = pic_units,
-         bg = 'white')
-
+  scale_fill_continuous(type = 'viridis')
+p
+myggsave(filename = 'pics/test.png', plot = p)
+myggsave(filename = 'pics/test.pdf', plot = p)
 
 
 # Choosing a validation set -----------------------------------------------
@@ -102,7 +91,7 @@ data_train2 <- data_train %>%
                                  ((x > -95 & x < -94.5) & (y > 35.25 & y < 35.75)) |
                                  ((x > -92.5 & x < -91.75) & (y > 36 & y < 36.75))),
                               1, 0))
-data_train2 %>%
+p <- data_train2 %>%
   mutate(across(c(x,y), round, digits = 2),
          training = 1 - validation) %>%
   group_by(x, y) %>%
@@ -110,16 +99,12 @@ data_train2 %>%
   mutate(Dataset = ifelse(training == 1, 'Train', 'Val')) %>%
   ggplot(aes(x, y, fill = Dataset)) +
   geom_raster() +
-  scale_fill_brewer(type = 'qual', palette = 6) +
-  theme_minimal()
+  scale_fill_discrete_qualitative()
+p
+myggsave(filename = 'pics/trainvalsplit.png', plot = p)
+myggsave(filename = 'pics/trainvalsplit.pdf', plot = p)
 
 mean(data_train2$validation)
-
-ggsave('pics/trainvalsplit.png',
-       width = pic_width * 2/3,
-       height = pic_height,
-       units = pic_units,
-       bg = 'white')
 
 
 # Saving data -------------------------------------------------------------

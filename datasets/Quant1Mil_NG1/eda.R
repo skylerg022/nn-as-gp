@@ -1,5 +1,4 @@
-## Skyler Gray
-## Exploratory data analysis of quant900k training data
+## Exploratory data analysis of Quant1Mil-NG1 training data
 
 ## Libraries
 library(tidyverse)
@@ -9,7 +8,13 @@ if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
 
+# Load default plot saving function and create pic/ directories
 source('../../functions/Defaults.R')
+CheckDir()
+
+# Adjust ggplot theme
+theme_set(theme(panel.background = element_rect(fill = 'gray30'),
+                panel.grid = element_blank()))
 
 # Set seed
 set.seed(22122)
@@ -30,10 +35,13 @@ data_train %>%
 # The data is approximately distributed uniformly across x and y.
 
 # How about for test data?
-data_test %>%
+p <- data_test %>%
   ggplot(aes(x, y)) +
   geom_bin_2d()
 # Approximately uniform across both axes as well
+p
+myggsave(filename = 'pics/test.png', plot = p)
+myggsave(filename = 'pics/test.pdf', plot = p)
 
 # Are there multiple observations in one location?
 ndistinct <- data_train %>%
@@ -45,29 +53,20 @@ ndistinct / ( nrow(data_train) + nrow(data_test) )
 # All observations in the combined training and test data are distinct
 #  and have a unique location
 
-# Correlation looks apparent. Show variogram
-# vario <- variog(coords = cbind(simple_train$x, simple_train$y),
-#                 data = simple_train$values)
-# plot(vario)
-# Correlation present
-
 # Visualize data
 # points not evenly spaced from each other. Averaging values in each "bin"
 # and displaying a 100 x 100 representation of the spatial data
-data_train %>%
+p <- data_train %>%
   mutate(across(c(x,y), round, digits = 2)) %>%
   group_by(x, y) %>%
   summarize(Value = mean(values)) %>%
   ggplot(aes(x, y, fill = Value)) +
   geom_raster() +
-  scale_fill_continuous(type = 'viridis') +
-  theme_minimal()
+  scale_fill_continuous(type = 'viridis')
+p
+myggsave(filename = 'pics/train.png', plot = p)
+myggsave(filename = 'pics/train.pdf', plot = p)
 
-ggsave('pics/train.png',
-       width = pic_width * (2/3),
-       height = pic_height,
-       units = pic_units,
-       bg = 'white')
 
 # Where is test set located?
 data_test %>%
