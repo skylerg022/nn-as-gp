@@ -22,7 +22,7 @@ set.seed(31522)
 # Read in data
 data_train <- read.csv('data/dataset1_training.csv')
 data_test <- read.csv('data/dataset1_testing.csv')
-y_test <- read.csv('data/dataset1_testtrue.csv', header = FALSE) %>%
+y_test <- read.csv('data/Z_01.csv', header = FALSE) %>%
   as.matrix()
 
 
