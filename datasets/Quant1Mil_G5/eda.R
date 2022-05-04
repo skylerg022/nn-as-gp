@@ -17,6 +17,9 @@ set.seed(31522)
 # Read in data
 data_train <- read.csv('data/dataset1_training.csv')
 data_test <- read.csv('data/dataset1_testing.csv')
+y_test <- read.csv('data/dataset1_testtrue.csv', header = FALSE) %>%
+  as.matrix()
+
 
 # EDA ---------------------------------------------------------------------
 
@@ -96,5 +99,5 @@ x_test <- data_test[,c(1,2)] %>%
 # Save
 save(x_train, y_train,
      x_val, y_val,
-     x_test, 
-     file = 'data/dataset1_split.RData')
+     x_test, y_test,
+     file = 'data/DataSplit.RData')
