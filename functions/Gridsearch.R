@@ -41,12 +41,20 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
                        loss = loss_mean_squared_error()) {
   myenv <- environment()
   
+  n_train <- nrow(x_train)
+  
   # Input preprocessing
   if (input_type == 'nn') {
+    # Center and scale train and val using training data only
+    predictorsScaled(x_train, x_val, test = FALSE) %>%
+      list2env(envir = myenv)
     # x_train and x_val are ready for scaling
   } else if (input_type == 'nn_trans') {
-    x_train <- cbind(x_train, x_train^2)
-    x_val <- cbind(x_val, x_val^2)
+    # Center and scale train and val using training data only
+    predictorsScaled(x_train, x_val, test = FALSE) %>%
+      list2env(envir = myenv)
+    x_train <- cbind(x_train, x_train^2, sin(x_train), cos(x_train))
+    x_val <- cbind(x_val, x_val^2, sin(x_val), cos(x_val))
   } else if (input_type == 'basis') {
     multiResBases(x_train = x_train,
                   x_withheld = x_val,
@@ -65,17 +73,6 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
   }
   
   # Neural Network
-  
-  n_train <- nrow(x_train)
-   
-  if (input_type != 'basis') {
-    # Center and scale train and val using training data only
-    predictorsScaled(x_train, x_val, test = FALSE) %>%
-      list2env(envir = myenv)
-    # x_scaled <- predictorsScaled(x_train, x_val)
-    # x_train <- x_scaled[1:n_train,]
-    # x_val <- x_scaled[-c(1:n_train),]
-  }
   
   if (modeltype == 'custom') {
     grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16), 

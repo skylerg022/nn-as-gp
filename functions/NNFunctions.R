@@ -276,11 +276,19 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
   # Location Transformations (if needed) -----------------------------------------
   
   if (type == 'nn') {
+    # Standardize when not using a radial basis function expansion
+    n <- nrow(data_train)
+    predictorsScaled(rbind(x_train, x_val), x_test, test = TRUE) %>%
+      list2env(envir = myenv)
     # x_train and x_val are ready for scaling
   } else if (type == 'nn_trans') {
-    x_train <- cbind(x_train, x_train^2)
-    x_val <- cbind(x_val, x_val^2)
-    x_test <- cbind(x_test, x_test^2)
+    # Standardize when not using a radial basis function expansion
+    n <- nrow(data_train)
+    predictorsScaled(rbind(x_train, x_val), x_test, test = TRUE) %>%
+      list2env(envir = myenv)
+    x_train <- cbind(x_train, x_train^2, sin(x_train), cos(x_train))
+    x_val <- cbind(x_val, x_val^2, sin(x_val), cos(x_val))
+    x_test <- cbind(x_test, x_test^2, sin(x_test), cos(x_test))
   } else if (type == 'basis') {
     multiResBases(x_train = rbind(x_train, x_val),
                   x_withheld = x_test,
@@ -295,14 +303,7 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
                           'as "nn", "nn_trans", or "basis".')
     stop(err_message)
   }
-  
-  # Standardize if not a radial basis function expansion
-  if (type != 'basis') {
-    n <- nrow(data_train)
-    predictorsScaled(rbind(x_train, x_val), x_test, test = TRUE) %>%
-      list2env(envir = myenv)
-    rm(x_val)
-  }
+  rm(x_val)
   
   # Neural Network --------------------------------------------------------
   
