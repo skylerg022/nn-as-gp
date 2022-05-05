@@ -1,8 +1,12 @@
 # Ignore data files
 datasets/*/data/*
 # Ignore summary pics
-*/pics/*
+datasets/*/pics/*
 # Ignore any image files
 *.png
 *.jpeg
 *.jpg
+# Archived files
+archive*
+# Knit README html file
+README.html

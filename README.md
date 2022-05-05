@@ -8,7 +8,7 @@ This code facilitates formatting and fitting fully-connected neural networks to 
 
 <p float="middle">
   <img src="datasets/Quant150K_Sim/pics/train.png" width="49%" />
-  <img src="datasets/Quant150K_Sim/pics/error_4by4_lee.png" width="49%" />
+  <img src="datasets/Quant150K_Sim/pics/basis_4_lee2018_error_test.png" width="49%" />
 </p>
 
 
