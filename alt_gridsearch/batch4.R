@@ -20,7 +20,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # args <- c('', 'FALSE')
 
 # Check that dataset exists
-dir_name <- paste0(getwd(), '../datasets/', args[1])
+dir_name <- paste0(getwd(), '/../datasets/', args[1])
 if (!dir.exists(dir_name)) {
   message <- paste0('Directory ', dir_name, ' does not exist.')
   stop(message)
