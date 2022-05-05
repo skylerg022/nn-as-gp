@@ -9,7 +9,7 @@ library(parallel)
 
 # Setup Functions ---------------------------------------------------------
 
-makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
+makeGridLee2018 <- function(n_layers = c(1, 2, 4, 8, 16),
                             layer_width = c(2^7, 2^8, 2^9, 2^10, 2^11)) {
   temp <- expand.grid(n_layers = n_layers,
                       layer_width = layer_width)
@@ -38,7 +38,8 @@ makeGridLee2018 <- function(n_layers = c(1, 3, 5, 10),
 gridsearch <- function(input_type = 'nn', modeltype = 'custom', 
                        n_cores = 20, sqrt_n_knots = NULL,
                        binary_data = FALSE,
-                       loss = loss_mean_squared_error()) {
+                       loss = loss_mean_squared_error(),
+                       dataset = '') {
   myenv <- environment()
   
   n_train <- nrow(x_train)
@@ -91,6 +92,11 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
     err_message <- paste0('Neural network modeltype not recognized. Please ', 
                           'assign modeltype to "custom" or "lee2018."')
     stop(err_message)
+  }
+  
+  # If using the toy dataset, reduce grid size to 30 NNs to fit
+  if (dataset == 'ToyDataset') {
+    grid <- tail(grid, 30)
   }
   
   # Make grid into input class: list

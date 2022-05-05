@@ -61,22 +61,26 @@ n_cores <- 30
 gridsearch(input_type = 'nn', modeltype = 'custom', 
            n_cores = n_cores, sqrt_n_knots = NULL, 
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 gridsearch(input_type = 'nn', modeltype = 'lee2018', 
            n_cores = n_cores, sqrt_n_knots = NULL,
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 
 # Transformed location input
 n_cores <- 30
 gridsearch(input_type = 'nn_trans', modeltype = 'custom', 
            n_cores = n_cores, sqrt_n_knots = NULL, 
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 gridsearch(input_type = 'nn_trans', modeltype = 'lee2018', 
            n_cores = n_cores, sqrt_n_knots = NULL,
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 
 # Radial basis function expansion
 # NOTE: Radial basis function expansions may take up significantly more RAM
@@ -84,11 +88,13 @@ n_cores <- 16
 gridsearch(input_type = 'basis', modeltype = 'custom', 
            n_cores = n_cores, sqrt_n_knots = c(4), 
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 gridsearch(input_type = 'basis', modeltype = 'lee2018', 
            n_cores = n_cores, sqrt_n_knots = c(4),
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 
 # Multi-resolution basis function expansion
 # NOTE: Radial basis function expansions may take up significantly more RAM
@@ -96,9 +102,11 @@ n_cores <- 16
 gridsearch(input_type = 'basis', modeltype = 'custom', 
            n_cores = n_cores, sqrt_n_knots = c(4, 20), 
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 gridsearch(input_type = 'basis', modeltype = 'lee2018', 
            n_cores = n_cores, sqrt_n_knots = c(4, 20),
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 

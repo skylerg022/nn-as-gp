@@ -58,9 +58,11 @@ n_cores <- 16
 gridsearch(input_type = 'basis', modeltype = 'custom', 
            n_cores = n_cores, sqrt_n_knots = c(4, 20), 
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 gridsearch(input_type = 'basis', modeltype = 'lee2018', 
            n_cores = n_cores, sqrt_n_knots = c(4, 20),
            binary_data = binary_data,
-           loss = loss)
+           loss = loss,
+           dataset = args[1])
 
