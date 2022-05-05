@@ -1,20 +1,16 @@
 ## An illustration of the problem of basis function expansions
 ##  applied to the Quant150K satellite data
 
-## Libraries
-library(tidyverse)
-library(keras)
-
 # Set working directory if using RStudio
 if (rstudioapi::isAvailable()) {
   setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 }
-source('../HelperFunctions/Preprocess.R')
-source('../HelperFunctions/Defaults.R')
 
+source('../functions/Preprocess.R')
+source('../functions/Defaults.R')
 
 # Read in data
-load('../Quant150K_Sim/data/AllSimulatedTemps.RData')
+load('../datasets/Quant150K_Sim/data/AllSimulatedTemps.RData')
 data_train <- all.sim.data %>%
   rename(x = Lon, y = Lat) %>%
   filter(!is.na(MaskTemp)) %>%
@@ -98,7 +94,7 @@ bases_ggplot <- data.frame(x = bases[,1],
 # Visualize data
 # points not evenly spaced from each other. Averaging values in each "bin"
 # and displaying a 100 x 100 representation of the spatial data
-data_train %>%
+p <- data_train %>%
   mutate(across(c(x,y), round, digits = 2)) %>%
   group_by(x, y) %>%
   summarize(Temp = mean(MaskTemp)) %>%
@@ -113,9 +109,6 @@ data_train %>%
                      low = 'red') +
   theme_minimal() +
   labs(col = 'Local N')
-
-ggsave('basis_problems.png',
-       width = pic_width * 2/3,
-       height = pic_height,
-       units = pic_units,
-       bg = 'white')
+p
+myggsave('basis_problems.png', plot = p)
+myggsave('basis_problems.pdf', plot = p)
