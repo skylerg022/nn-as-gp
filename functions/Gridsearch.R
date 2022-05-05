@@ -213,6 +213,7 @@ gridsearchEDAandClean <- function(model, loss,
                     fillvar = 'min_loss', xlab = 'Layer Width', 
                     ylab = 'Hidden Layers',
                     binary_data = binary_data)
+  myggsave(filename = paste0('pics/gridsearch/frame_', filename, '.png'), plot = p)
   myggsave(filename = paste0('pics/gridsearch/frame_', filename, '.pdf'), plot = p)
   
   ### Best Models: Lowest LOSS -------------------------------------
