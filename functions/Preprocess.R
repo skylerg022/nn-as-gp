@@ -2,19 +2,26 @@
 
 # Multi-resolution spatial basis function expansion
 # Inputs:
-# - x_train: matrix of all training data
-# - x_withheld: matrix of all withheld data
+# - x_train: matrix of all training location data
+# - x_withheld: matrix of all withheld location data
 # - sqrt_n_knots: a vector of integers. Larger integers means a
 #     finer grid of basis function expansions.
-# - min_n: an integer for the required minimum sample size for
-#     a basis/knot to be kept for training
-# - test: if TRUE, will return transformed, withheld x's as x_test, x_val otherwise
+# - local_n: a numeric value for the minimum local sample size required to return
+#     a basis/knot as part of the radial basis function expansion.
+# - closest_minval: a numeric value between 0 and 1 stipulating how close the
+#     closest observation to each basis/knot must be in order to keep that
+#     basis/knot as part of the returned radial basis function expansion. A
+#     higher value translates the closest observation being nearer to the knot.
+# - test: if TRUE, will return transformed withheld x's as x_test, x_val
+#     otherwise. This argument is used chiefly to conserve RAM in parallel
+#     processing during grid searches.
 # Output:
-# - Basis function expansion of various resolutions where all
-#     bases have at least min_n non-zero values (n_min local observations)
+# - A named list of two matrices of dimensions nxk and mxk, where n and m are the 
+#     number of observations in x_train and x_withheld, respectively, and k is
+#     the number of basis transformations with a large enough local sample size.
+#     k is sum(sqrt_n_knots^2) at most.
 multiResBases <- function(x_train, x_withheld, sqrt_n_knots, 
-                          thresh_type, thresh, thresh_max,
-                          test = TRUE) {
+                          local_n, closest_minval, test = TRUE) {
   ## Calculate Wendland basis
   wendland <- function(d){
     ((1-d)^6) * (35*d^2 + 18*d + 3) / 3
@@ -64,18 +71,10 @@ multiResBases <- function(x_train, x_withheld, sqrt_n_knots,
     colnames(X) <- paste0("X", knots, '_', 1:ncol(X))
     
     # Assess which bases to keep
-    if (thresh_type == 'nonzero') {
-      n_nonzero <- colSums(X != 0)
-      good_bases_idx <- which(n_nonzero >= thresh)
-    } else if (thresh_type == 'colsum') {
-      sums <- colSums(X)
-      max_val <- apply(X, 2, max)
-      good_bases_idx <- which( (sums >= thresh) & (max_val > thresh_max) )
-    } else {
-      err <- paste0("Threshold type not recognized. Currently, only 'nonzero' ", 
-                    "and 'colsum' are allowed.")
-      stop(err)
-    }
+    basis_n <- colSums(X)
+    max_val <- apply(X, 2, max)
+    good_bases_idx <- which( (basis_n >= local_n) & (max_val > closest_minval) )
+    
     x_bases <- cbind(x_bases, X[,good_bases_idx])
     
     # Basis function expansion for x_withheld on training bases
@@ -100,30 +99,24 @@ multiResBases <- function(x_train, x_withheld, sqrt_n_knots,
 
 # predictorsScaled
 # Center and scale all observations by columns. To scale the data
-#  using all observations, let x_withheld be NULL and set val_split to 0.
-#  When x_withheld is not null, val_split is ignored.
+#  using all observations, let x_withheld be NULL.
 # Inputs:
 # - x_train: An n x p matrix of n observations and p numeric predictors.
 # - x_withheld: An m x p matrix of m observations and p numeric predictors.
-#     These observations will never be used to calculate column means and
+#     These observations are not used to calculate column means and
 #     standard deviations.
-# - val_split: the proportion of training data to exclude (last 100*val_split 
-#     percent of the observations) when calculating column means and standard
-#     devations.
+# - test: if TRUE, will return transformed withheld x's as x_test, x_val
+#     otherwise. This argument is used chiefly to conserve RAM in parallel
+#     processing during grid searches.
 # Output:
-# - An (n+m) x p matrix of all observations, centered and scaled using
-#     just the training data.
-predictorsScaled <- function(x_train, x_withheld = NULL, val_split = 0.2, test = TRUE) {
-  n <- nrow(x_train)
-  if (is.null(x_withheld)) {
-    n_train <- floor(nrow(x_train) * (1-val_split))
-  } else {
-    n_train <- n
-  }
-  mean_train <- x_train[1:n_train,] %>%
-    colMeans()
-  sd_train <- x_train[1:n_train,] %>%
-    apply(2, sd)
+# - A 2-item list with x_train and x_withheld matrices transformed using only
+#     data from the x_train matrix.
+predictorsScaled <- function(x_train, x_withheld = NULL, test = TRUE) {
+  n_train <- nrow(x_train)
+  n_withheld <- nrow(x_withheld)
+  
+  mean_train <- colMeans(x_train)
+  sd_train <- apply(x_train, 2, sd)
   
   # Function to help with matrix math
   quickMatrix <- function(n, x) {
@@ -131,12 +124,12 @@ predictorsScaled <- function(x_train, x_withheld = NULL, val_split = 0.2, test =
   }
   
   # Scale predictors with appropriate statistics
-  x_train <- ( (x_train - quickMatrix(n, mean_train)) /
-                 quickMatrix(n, sd_train) ) %>%
+  x_train <- ( (x_train - quickMatrix(n_train, mean_train)) /
+                 quickMatrix(n_train, sd_train) ) %>%
     as.matrix()
-  if (!is.null(x_withheld)) {
-    x_withheld <- ( (x_withheld - quickMatrix(nrow(x_withheld), mean_train)) /
-                  quickMatrix(nrow(x_withheld), sd_train) ) %>%
+  if(!is.null(x_withheld)) {
+    x_withheld <- ( (x_withheld - quickMatrix(n_withheld, mean_train)) /
+                  quickMatrix(n_withheld, sd_train) ) %>%
       as.matrix()
   }
   
@@ -150,15 +143,22 @@ predictorsScaled <- function(x_train, x_withheld = NULL, val_split = 0.2, test =
 }
 
 
-# Create evenly spaced continuous values while maintaining the approximate 
-#  range and value of observation values
-# May not preserve range if number of bins is less than 100
+# discretize
+# Create evenly spaced continuous values accross the location space while 
+#  maintaining the approximate range and value of observation values.
+# Inputs:
+# - x: A vector of numeric values.
+# - nbins: an integer representing the number of evenly spaced values to bin x into.
+# Output:
+# - A vector of numeric values the same length as x with values evenly spaced
+#     distance between bins
 discretize <- function(x, nbins = 100) {
-  # If already evenly spaced, don't "discretize"
+  # If already evenly spaced, don't "discretize" (Consider coding this up)
   
   # otherwise... make discrete
-  edges <- seq(min(x), max(x), length.out = nbins + 1)
-  binvals <- (edges[-1] + edges[1:nbins]) / 2
-  bin_idx <- .bincode(x, breaks = edges, right = FALSE, include.lowest = TRUE)
+  binvals <- seq(min(x), max(x), length.out = nbins-1)
+  bindist <- binvals[2] - binvals[1]
+  edges <- c(binvals - bindist/2, max(x) + bindist/2)
+  bin_idx <- .bincode(x, breaks = edges)
   return(binvals[bin_idx])
 }

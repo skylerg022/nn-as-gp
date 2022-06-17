@@ -9,27 +9,52 @@ library(parallel)
 
 # Setup Functions ---------------------------------------------------------
 
-makeGridLee2018 <- function(n_layers = c(1, 2, 4, 8, 16),
-                            layer_width = c(2^7, 2^8, 2^9, 2^10, 2^11)) {
-  temp <- expand.grid(n_layers = n_layers,
-                      layer_width = layer_width)
-  grid <- do.call("rbind", 
-                  replicate(50, temp, simplify = FALSE))
-  n_grid <- nrow(grid)
-  
-  grid <- grid %>%
-    mutate(learning_rate = exp( runif(n_grid, log(10^(-4)), log(0.2)) ),
-           weight_decay = exp( runif(n_grid, log(10^(-8)), log(1)) ),
-           epochs = 100,
-           batch_size = sample(c(2^4, 2^5, 2^6, 2^7, 2^8),
-                               size = n_grid, replace = TRUE),
-           sigma_w = runif(n_grid, 0.01, 2.5),
-           sigma_b = runif(n_grid, 0, 1.5)) %>%
-    # filter out observations with more than 800,000 parameters
-    filter((layer_width^2)*(n_layers-1) <= 8e5) %>%
-    arrange( desc((layer_width^2)*(n_layers-1)) ) %>%
-    mutate(model_num = row_number())
-  
+# makeGrid
+# Make a search grid to run for hyperparameter optimization
+# Inputs:
+# - grid_type: a vector of integers for the number of hidden layers in the
+#     neural network to fit.
+# - n_layers: a vector of integers for the number of neurons in each hidden layer.
+# - layer_width:
+# - n_train:
+# Output:
+# - A dataframe where each row is a NN hyperparameter setup. This dataframe is
+#   meant to be cycled through using the general gridsearch.R R script in the
+#   main directory.
+makeGrid <- function(grid_type,
+                     n_layers = c(1, 2, 4, 8, 16),
+                     layer_width = c(2^7, 2^8, 2^9, 2^10, 2^11),
+                     n_train = NULL) {
+  if (grid_type == 'lee2018') {
+    temp <- expand.grid(n_layers = n_layers,
+                        layer_width = layer_width)
+    grid <- do.call("rbind", 
+                    replicate(50, temp, simplify = FALSE))
+    n_grid <- nrow(grid)
+    
+    grid <- grid %>%
+      mutate(learning_rate = exp( runif(n_grid, log(10^(-4)), log(0.2)) ),
+             weight_decay = exp( runif(n_grid, log(10^(-8)), log(1)) ),
+             epochs = 100,
+             batch_size = sample(c(2^4, 2^5, 2^6, 2^7, 2^8),
+                                 size = n_grid, replace = TRUE),
+             sigma_w = runif(n_grid, 0.01, 2.5),
+             sigma_b = runif(n_grid, 0, 1.5)) %>%
+      # filter out observations with more than 800,000 parameters
+      filter((layer_width^2)*(n_layers-1) <= 8e5) %>%
+      arrange( desc((layer_width^2)*(n_layers-1)) ) %>%
+      mutate(model_num = row_number())
+  } else if (grid_type == 'custom') {
+    grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16), 
+                        layer_width = c(2^3, 2^6, 2^7, 2^8, 2^9, 2^10, 2^11),
+                        epochs = c(100), 
+                        batch_size = c(2^4, 2^5, 2^6, 2^7, 2^8),
+                        decay_rate = c(0, 0.01),
+                        dropout_rate = c(0, 0.1)) %>%
+      filter(layer_width^2 * (n_layers - 1) < 800000) %>%
+      mutate(decay_rate = decay_rate / (n_train %/% batch_size),
+             model_num = 1:n())
+  }
   return(grid)
 }
 
@@ -60,9 +85,8 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
     multiResBases(x_train = x_train,
                   x_withheld = x_val,
                   sqrt_n_knots = sqrt_n_knots,
-                  thresh_type = 'colsum',
-                  thresh = 30,
-                  thresh_max = 0.75,
+                  local_n = 30,
+                  closest_minval = 0.75,
                   test = FALSE) %>%
       list2env(envir = myenv)
     # x_train <- x_bases$x_train
@@ -76,18 +100,15 @@ gridsearch <- function(input_type = 'nn', modeltype = 'custom',
   # Neural Network
   
   if (modeltype == 'custom') {
-    grid <- expand.grid(n_layers = c(1, 2, 4, 8, 16), 
-                        layer_width = c(2^3, 2^6, 2^7, 2^8, 2^9, 2^10, 2^11),
-                        epochs = c(100), 
-                        batch_size = c(2^4, 2^5, 2^6, 2^7, 2^8),
-                        decay_rate = c(0, 0.01),
-                        dropout_rate = c(0, 0.1)) %>%
-      filter(layer_width^2 * (n_layers - 1) < 800000) %>%
-      mutate(decay_rate = decay_rate / (n_train %/% batch_size),
-             model_num = 1:n())
+    grid <- makeGrid(grid_type = 'custom',
+                     n_layers = c(1, 2, 4, 8, 16),
+                     layer_width = c(2^3, 2^6, 2^7, 2^8, 2^9, 2^10, 2^11),
+                     n_train = n_train)
   } else if (modeltype == 'lee2018') {
-    grid <- makeGridLee2018(n_layers = c(1, 2, 4, 8, 16),
-                            layer_width = c(2^6, 2^7, 2^8, 2^9, 2^10, 2^11))
+    grid <- makeGrid(grid_type = 'lee2018',
+                     n_layers = c(1, 2, 4, 8, 16),
+                     layer_width = c(2^6, 2^7, 2^8, 2^9, 2^10, 2^11),
+                     n_train = NULL)
   } else {
     err_message <- paste0('Neural network modeltype not recognized. Please ', 
                           'assign modeltype to "custom" or "lee2018."')

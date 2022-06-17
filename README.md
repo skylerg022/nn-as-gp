@@ -11,6 +11,7 @@ This code facilitates formatting and fitting fully-connected neural networks to 
   <img src="datasets/Quant150K_Sim/pics/basis_4_lee2018_error_test.png" width="49%" />
 </p>
 
+**Disclaimer**: These results are not replicable because of parallelization and large search grids used in optimizing hyperparameters.
 
 ## Requirements
 

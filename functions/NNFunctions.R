@@ -293,9 +293,8 @@ evalNetwork <- function(x_train, y_train, x_val, y_val,
     multiResBases(x_train = rbind(x_train, x_val),
                   x_withheld = x_test,
                   sqrt_n_knots = sqrt_n_knots,
-                  thresh_type = 'colsum',
-                  thresh = 30,
-                  thresh_max = 0.75,
+                  local_n = 30,
+                  closest_minval = 0.75,
                   test = TRUE) %>%
       list2env(envir = myenv)
   } else {

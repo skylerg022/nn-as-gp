@@ -11,8 +11,8 @@ source('../functions/Preprocess.R')
 load('../datasets/Quant150K_Sim/data/DataSplit.RData')
 
 x_bases <- multiResBases(x_train = rbind(x_train, x_val), x_withheld = x_test,
-                         sqrt_n_knots = c(4), thresh_type = 'colsum',
-                         thresh = 30, thresh_max = 0.75)
+                         sqrt_n_knots = c(4), local_n = 30, 
+                         closest_minval = 0.75, test = TRUE)
 
 train <- cbind(rbind(x_train, x_val), x_bases$x_train) %>%
   as.data.frame()
