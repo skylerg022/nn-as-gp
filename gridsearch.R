@@ -55,58 +55,69 @@ if (binary_data == TRUE) {
 #   the default ncore settings shown below. Consider running four separate
 #   batches on different computers at one time to speed up computation.
 #   You can find these gridsearch batch files in alt_gridsearch/.
+time <- system.time({
+  
+  # Raw location input
+  n_cores <- 20
+  gridsearch(input_type = 'nn', modeltype = 'custom', 
+             n_cores = n_cores, sqrt_n_knots = NULL, 
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  gridsearch(input_type = 'nn', modeltype = 'lee2018', 
+             n_cores = n_cores, sqrt_n_knots = NULL,
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  
+  # Transformed location input
+  n_cores <- 20
+  gridsearch(input_type = 'nn_trans', modeltype = 'custom', 
+             n_cores = n_cores, sqrt_n_knots = NULL, 
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  gridsearch(input_type = 'nn_trans', modeltype = 'lee2018', 
+             n_cores = n_cores, sqrt_n_knots = NULL,
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  
+  # Radial basis function expansion
+  # NOTE: Radial basis function expansions may take up significantly more RAM
+  n_cores <- 20
+  gridsearch(input_type = 'basis', modeltype = 'custom', 
+             n_cores = n_cores, sqrt_n_knots = c(4), 
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  gridsearch(input_type = 'basis', modeltype = 'lee2018', 
+             n_cores = n_cores, sqrt_n_knots = c(4),
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  
+  # Multi-resolution basis function expansion
+  # NOTE: Radial basis function expansions may take up significantly more RAM
+  n_cores <- 20
+  gridsearch(input_type = 'basis', modeltype = 'custom', 
+             n_cores = n_cores, sqrt_n_knots = c(4, 20), 
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  gridsearch(input_type = 'basis', modeltype = 'lee2018', 
+             n_cores = n_cores, sqrt_n_knots = c(4, 20),
+             binary_data = binary_data,
+             loss = loss,
+             dataset = args[1])
+  
+})
 
-# Raw location input
-n_cores <- 30
-gridsearch(input_type = 'nn', modeltype = 'custom', 
-           n_cores = n_cores, sqrt_n_knots = NULL, 
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-gridsearch(input_type = 'nn', modeltype = 'lee2018', 
-           n_cores = n_cores, sqrt_n_knots = NULL,
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
+secondsToHours <- function(seconds) {
+  return(seconds / 60 / 60)
+}
+time_hours <- secondsToHours(time[3])
+computation_out <- paste0('Dataset: ', args[1], 
+                          '\nTime elapsed: ', time_hours, ' hours\n')
 
-# Transformed location input
-n_cores <- 30
-gridsearch(input_type = 'nn_trans', modeltype = 'custom', 
-           n_cores = n_cores, sqrt_n_knots = NULL, 
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-gridsearch(input_type = 'nn_trans', modeltype = 'lee2018', 
-           n_cores = n_cores, sqrt_n_knots = NULL,
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-
-# Radial basis function expansion
-# NOTE: Radial basis function expansions may take up significantly more RAM
-n_cores <- 16
-gridsearch(input_type = 'basis', modeltype = 'custom', 
-           n_cores = n_cores, sqrt_n_knots = c(4), 
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-gridsearch(input_type = 'basis', modeltype = 'lee2018', 
-           n_cores = n_cores, sqrt_n_knots = c(4),
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-
-# Multi-resolution basis function expansion
-# NOTE: Radial basis function expansions may take up significantly more RAM
-n_cores <- 16
-gridsearch(input_type = 'basis', modeltype = 'custom', 
-           n_cores = n_cores, sqrt_n_knots = c(4, 20), 
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-gridsearch(input_type = 'basis', modeltype = 'lee2018', 
-           n_cores = n_cores, sqrt_n_knots = c(4, 20),
-           binary_data = binary_data,
-           loss = loss,
-           dataset = args[1])
-
+write(computation_out, file = "../../gridsearch_run_times.txt", append = TRUE)
