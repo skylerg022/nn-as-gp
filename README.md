@@ -27,13 +27,16 @@ This code facilitates formatting and fitting fully-connected neural networks to 
 
 The grid search code for this project uses parallel processing and is meant to be run via the command line on either a MacOS or Linux machine. However, all other code can be run on any type of operating system. Ideally, you should have at least one machine with 16 cores and around 126 GB of RAM for the grid search computations.
 
-Run the following installation commands in R to be capable of running all included code:
+This code runs on R version 4.2.1. Run the following installation commands in R to be capable of running all included code:
 
 ```
-packs <- c('tidyverse', 'keras', 'parallel',
-           'pryr', 'lme4', 'raster',
-           'Rspectra', 'colorspace')
+packs <- c('parallel', 'pryr', 'lme4', 
+           'raster', 'Rspectra')
 install.packages(packs)
+
+devtools::install_version('tidyverse', version='1.3.2')
+devtools::install_version('keras', version='2.9.0')
+devtools::install_version('colorspace', version='2.0-3')
 keras::install_keras()
 ```
 
@@ -61,7 +64,7 @@ Only the data used in **ToyDataset** and **Binary1Million** are included in this
 
 - **Quant1Mil_G5**: Gaussian simulated data with a sample size of 1 million from the "Competition on Spatial Statistics for Large Datasets" by Huang et al. (2021). The data is available at [https://doi.org/10.25781/KAUST-8VP2V](https://doi.org/10.25781/KAUST-8VP2V). Save **dataset01_training.csv**, **dataset01_testing.csv**, and **truemeasurements/Z_01.csv** from the **Sub-competition_2b** folder into the **Quant1Mil_G5/data** directory of this repository.
 
-- **Quant1Mil_NG1**: Non-Gaussian simulated data with a sample size of 1 million from the same location as **Quant1Mil_G5**. Save **dataset01_training.csv**, **dataset01_testing.csv**, and **truemeasurements/Z_01.csv** from the **Sub-competition_2b** folder into the **Quant1Mil_G5/data** directory of this repository.
+- **Quant1Mil_NG1**: Non-Gaussian simulated data with a sample size of 1 million from the same location as **Quant1Mil_G5**. Save **dataset02_training.csv**, **dataset02_testing.csv**, and **truemeasurements/Z_02.csv** from the **Sub-competition_2b** folder into the **Quant1Mil_NG1/data** directory of this repository.
 
 - **Binary1Million**: Simulated, spatially-correlated binary data with a sample size of 1 million provided by Sandia National Labs.
 
